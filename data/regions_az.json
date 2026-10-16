@@ -1,1 +1,103 @@
-
+{
+  "title": "Regions & Availability Zones",
+  "study": [
+    {
+      "term": "A multinational company is launching an e-commerce multi-tier application. Due to aggressive marketing promotions, the company expects massive traffic spikes on the launch day. As a Solutions Architect, you must design a database architecture that prevents any potential failure in the database layer and ensures high availability. Which configuration should you choose?",
+      "definition": "Migrate the database to Amazon RDS in a Multi-AZ deployment.",
+      "explanation": "When preparing for high-traffic events, ensuring high availability is crucial. Amazon RDS Multi-AZ automatically provisions and maintains a synchronous standby replica in a different Availability Zone within the same Region. In the event of an infrastructure failure or Availability Zone disruption, Amazon RDS automatically fails over to the standby so that database operations can resume quickly."
+    },
+    {
+      "term": "A food company is building an application to collect customer feedback. This application will be deployed across 3 Amazon EC2 instances and needs to remain highly available. The architecture must survive the failure of a single data center without any downtime. What is the BEST architectural design for the VPC subnets?",
+      "definition": "Deploy the EC2 instances in private subnets spread across 3 separate Availability Zones and place them behind an Application Load Balancer.",
+      "explanation": "Deploying instances across multiple Availability Zones provides High Availability (HA) against a single data center failure. For security best practices in a web architecture, the EC2 instances should reside in private subnets, while an internet-facing Application Load Balancer in public subnets routes the traffic to them across the AZs."
+    },
+    {
+      "term": "A company needs a disaster recovery (DR) solution with a Recovery Time Objective (RTO) of 4 hours and a Recovery Point Objective (RPO) of 1 hour. Currently, their primary infrastructure is located in us-east-1, but their compliance team requires recovery capabilities in an entirely different geographic location in case of a catastrophic event affecting the primary region. Which approach is best?",
+      "definition": "Replicate data and deploy a pilot light environment in a secondary AWS Region (e.g., us-west-2).",
+      "explanation": "A Multi-Region architecture is required for disaster recovery scenarios when compliance mandates surviving the loss of an entire geographic region. A \"pilot light\" approach in a secondary region meets the RTO of 4 hours and RPO of 1 hour cost-effectively."
+    },
+    {
+      "term": "A scientific magazine has a web application that allows users around the world to upload and download large research files. These files are saved in an Amazon S3 bucket located in us-east-1. Users in Europe are experiencing slow performance and high latency when downloading these files during peak times. What is the BEST solution to improve download performance for the users in Europe?",
+      "definition": "Use Amazon CloudFront to cache and deliver the content using Edge Locations globally.",
+      "explanation": "Amazon CloudFront is a Content Delivery Network (CDN) that utilizes AWS Edge Locations worldwide to cache static content closer to end users. This drastically reduces latency and improves download speeds globally."
+    },
+    {
+      "term": "An e-commerce application is hosted in AWS and uses a distributed database installed on multiple Amazon EC2 instances. The database stores all its data on storage volumes attached to the instances. The operation must be fault-tolerant up to the loss of a single EC2 instance. Which storage solution should be used?",
+      "definition": "Amazon Elastic Block Store (EBS)",
+      "explanation": "Amazon Elastic Block Store (EBS) provides persistent block storage volumes specifically designed for EC2 instances. EBS volumes are highly durable, fault-tolerant, and their data is automatically replicated within their Availability Zone."
+    },
+    {
+      "term": "A company needs to host an application that strictly requires single-digit millisecond latency for users in Los Angeles. However, the nearest standard AWS Region is us-west-1 (Northern California). The company cannot accept the network latency of routing traffic to Northern California. What should the Solutions Architect recommend?",
+      "definition": "Deploy the application resources in an AWS Local Zone located in Los Angeles.",
+      "explanation": "AWS Local Zones place compute, storage, database, and other select AWS services closer to large population centers where no AWS Region exists today. They are specifically designed to deliver single-digit millisecond latency."
+    }
+  ],
+  "test": [
+    {
+      "question": "A multinational company is launching an e-commerce multi-tier application. Due to aggressive marketing promotions, the company expects massive traffic spikes on the launch day. As a Solutions Architect, you must design a database architecture that prevents any potential failure in the database layer and ensures high availability. Which configuration should you choose?",
+      "options": [
+        "Deploy the database on a single large Amazon EC2 instance to maximize compute performance.",
+        "Migrate the database to Amazon RDS in a Multi-AZ deployment.",
+        "Deploy the database on Amazon RDS in a Single-AZ deployment and take hourly manual snapshots.",
+        "Create another Disaster Recovery (DR) site in a different AWS Region using active-active replication."
+      ],
+      "correctIndex": 1,
+      "explanation": "When preparing for high-traffic events, ensuring high availability is crucial. Amazon RDS Multi-AZ automatically provisions and maintains a synchronous standby replica in a different Availability Zone within the same Region. In the event of an infrastructure failure or Availability Zone disruption, Amazon RDS automatically fails over to the standby so that database operations can resume quickly."
+    },
+    {
+      "question": "A food company is building an application to collect customer feedback. This application will be deployed across 3 Amazon EC2 instances and needs to remain highly available. The architecture must survive the failure of a single data center without any downtime. What is the BEST architectural design for the VPC subnets?",
+      "options": [
+        "Deploy all 3 EC2 instances in a single public subnet within one Availability Zone.",
+        "Deploy the EC2 instances across 3 different Availability Zones using a single public subnet.",
+        "Deploy the EC2 instances in private subnets spread across 3 separate Availability Zones and place them behind an Application Load Balancer.",
+        "Deploy the instances across 3 different AWS Regions to ensure maximum fault tolerance."
+      ],
+      "correctIndex": 2,
+      "explanation": "Deploying instances across multiple Availability Zones provides High Availability (HA) against a single data center failure. For security best practices in a web architecture, the EC2 instances should reside in private subnets, while an internet-facing Application Load Balancer in public subnets routes the traffic to them across the AZs."
+    },
+    {
+      "question": "A company needs a disaster recovery (DR) solution with a Recovery Time Objective (RTO) of 4 hours and a Recovery Point Objective (RPO) of 1 hour. Currently, their primary infrastructure is located in us-east-1, but their compliance team requires recovery capabilities in an entirely different geographic location in case of a catastrophic event affecting the primary region. Which approach is best?",
+      "options": [
+        "Implement a Multi-AZ deployment for all resources within us-east-1.",
+        "Deploy AWS Outposts in their local on-premises data center and replicate data there.",
+        "Enable Amazon CloudFront to cache the data globally across all Edge Locations.",
+        "Replicate data and deploy a pilot light environment in a secondary AWS Region (e.g., us-west-2)."
+      ],
+      "correctIndex": 3,
+      "explanation": "A Multi-Region architecture is required for disaster recovery scenarios when compliance mandates surviving the loss of an entire geographic region. A \"pilot light\" approach in a secondary region meets the RTO of 4 hours and RPO of 1 hour cost-effectively."
+    },
+    {
+      "question": "A scientific magazine has a web application that allows users around the world to upload and download large research files. These files are saved in an Amazon S3 bucket located in us-east-1. Users in Europe are experiencing slow performance and high latency when downloading these files during peak times. What is the BEST solution to improve download performance for the users in Europe?",
+      "options": [
+        "Use Amazon CloudFront to cache and deliver the content using Edge Locations globally.",
+        "Replicate the S3 bucket to every AWS Region globally using Cross-Region Replication (CRR).",
+        "Move the S3 bucket from us-east-1 to a region in Europe (e.g., eu-central-1).",
+        "Deploy an S3 File Gateway in each user's local network."
+      ],
+      "correctIndex": 0,
+      "explanation": "Amazon CloudFront is a Content Delivery Network (CDN) that utilizes AWS Edge Locations worldwide to cache static content closer to end users. This drastically reduces latency and improves download speeds globally."
+    },
+    {
+      "question": "An e-commerce application is hosted in AWS and uses a distributed database installed on multiple Amazon EC2 instances. The database stores all its data on storage volumes attached to the instances. The operation must be fault-tolerant up to the loss of a single EC2 instance. Which storage solution should be used?",
+      "options": [
+        "Amazon EC2 Instance Store",
+        "Amazon S3 Standard",
+        "Amazon Elastic Block Store (EBS)",
+        "Amazon S3 Glacier"
+      ],
+      "correctIndex": 2,
+      "explanation": "Amazon Elastic Block Store (EBS) provides persistent block storage volumes specifically designed for EC2 instances. EBS volumes are highly durable, fault-tolerant, and their data is automatically replicated within their Availability Zone."
+    },
+    {
+      "question": "A company needs to host an application that strictly requires single-digit millisecond latency for users in Los Angeles. However, the nearest standard AWS Region is us-west-1 (Northern California). The company cannot accept the network latency of routing traffic to Northern California. What should the Solutions Architect recommend?",
+      "options": [
+        "Deploy the application using AWS Wavelength.",
+        "Create a custom Availability Zone in Los Angeles.",
+        "Use an Amazon API Gateway in us-west-1 to accelerate traffic.",
+        "Deploy the application resources in an AWS Local Zone located in Los Angeles."
+      ],
+      "correctIndex": 3,
+      "explanation": "AWS Local Zones place compute, storage, database, and other select AWS services closer to large population centers where no AWS Region exists today. They are specifically designed to deliver single-digit millisecond latency."
+    }
+  ]
+}
