@@ -1,0 +1,226 @@
+{
+  "title": "AWS Identity & Access Management (IAM)",
+  "study": [
+    {
+      "term": "What is the primary function of AWS IAM and what is its global/regional scope?",
+      "definition": "IAM is a Global service used to manage access to AWS services and resources securely.",
+      "explanation": "IAM (Identity and Access Management) operates globally, meaning you do not select a region to use it. It allows you to create Users, Groups, and Roles, and apply Policies to enforce security."
+    },
+    {
+      "term": "What are the core rules regarding IAM Users and IAM Groups?",
+      "definition": "Users are physical entities, Groups contain ONLY Users, and one user can belong to multiple groups.",
+      "explanation": "In IAM, a physical user should correspond to one AWS IAM user. Groups can only contain users, meaning you cannot nest a group inside another group. Users do not have to belong to a group, but they can be part of multiple groups simultaneously. Permissions are inherited from all groups a user belongs to, plus any inline policies attached directly to them."
+    },
+    {
+      "term": "What is the 'Least Privilege Principle' in AWS?",
+      "definition": "Don't give more permissions than a user absolutely needs to perform their job.",
+      "explanation": "In AWS, by default, users have NO permissions (implicit deny). When writing IAM policies, you must explicitly allow access only to the exact actions (e.g., s3:GetObject) and resources required for their tasks, avoiding wildcard (*) permissions whenever possible."
+    },
+    {
+      "term": "What are the components of an IAM Policy statement?",
+      "definition": "Effect, Principal, Action, Resource, and an optional Condition.",
+      "explanation": "Policies are JSON documents. The 'Version' is usually 2012-10-17. Inside the Statement: 'Effect' is Allow/Deny. 'Principal' defines WHO the policy applies to. 'Action' specifies the API calls (e.g., ec2:DescribeInstances). 'Resource' specifies the exact AWS entity. 'Condition' specifies when the policy is in effect (e.g., only from a specific IP)."
+    },
+    {
+      "term": "What are the three main ways a user can access AWS, and how are they secured?",
+      "definition": "AWS Management Console (Password + MFA), AWS CLI (Access Keys), and AWS SDK (Access Keys).",
+      "explanation": "The Management Console is accessed via a username and password. Programmatic access via the Command Line Interface (CLI) or Software Developer Kit (SDK) requires Access Keys. Access Keys consist of an Access Key ID (acts like a username) and a Secret Access Key (acts like a password). They must never be shared or hardcoded."
+    },
+    {
+      "term": "What features can you enforce using an IAM Password Policy?",
+      "definition": "Minimum length, specific character types, password expiration, and prevention of password reuse.",
+      "explanation": "To enforce strong passwords, the IAM Password Policy allows you to mandate uppercase, lowercase, numbers, and non-alphanumeric characters. You can also require users to change their passwords every X days (expiration), prevent them from reusing recent passwords, and allow IAM users to change their own passwords."
+    },
+    {
+      "term": "What types of MFA (Multi-Factor Authentication) devices does AWS support?",
+      "definition": "Virtual MFA devices, Universal 2nd Factor (U2F) Security Keys, and Hardware Key Fob MFA Devices.",
+      "explanation": "MFA requires a password (what you know) + a security device (what you have). Virtual devices include Google Authenticator and Authy (phone apps). U2F keys include YubiKey (supports multiple users on a single key). Hardware Key Fobs are provided by third parties like Gemalto or SurePassID (for AWS GovCloud)."
+    },
+    {
+      "term": "What is the AWS best practice for granting an EC2 instance access to an S3 bucket or other AWS services?",
+      "definition": "Create an IAM Role and attach it to the EC2 instance.",
+      "explanation": "You should never store IAM user credentials or access keys on an EC2 instance. Instead, you create an IAM Role with the necessary permissions and attach it to the EC2 instance or AWS service so it can perform actions on your behalf securely."
+    },
+    {
+      "term": "What are the two primary IAM Security Auditing Tools and what is the difference between them?",
+      "definition": "IAM Credentials Report (Account-level) and IAM Access Advisor (User-level).",
+      "explanation": "The IAM Credentials Report lists all your account's users and the status of their various credentials (e.g., password age, MFA status). The IAM Access Advisor shows the service permissions granted to a specific user and when those services were last accessed."
+    },
+    {
+      "term": "What is the fundamental best practice regarding the AWS Account Root User?",
+      "definition": "Do not use the root account for daily tasks; use it only for initial AWS account setup.",
+      "explanation": "The root account has unrestricted access to all resources. The best practice is to use it only to create the first administrative IAM user, enable MFA on the root account, and then lock the root credentials away."
+    },
+    {
+      "term": "What is the difference between the AWS CLI and the AWS SDK?",
+      "definition": "The CLI is a command-line shell tool for managing resources, while the SDK provides language-specific APIs (libraries) embedded within your application code.",
+      "explanation": "Use the AWS CLI to develop scripts or interact directly with AWS public APIs from your terminal. Use the AWS SDK (available for Python, Java, Node.js, Android, IoT, etc.) when you need to programmatically interact with AWS services from within your custom application code."
+    },
+    {
+      "term": "Besides Amazon EC2, what are other common AWS services that use IAM Roles to perform actions on your behalf?",
+      "definition": "AWS Lambda and AWS CloudFormation.",
+      "explanation": "AWS services need permissions just like physical users. For example, if a Lambda function needs to read from DynamoDB, or if CloudFormation needs to provision a VPC, you must assign them an IAM Role (Lambda Function Role or CloudFormation Role) containing the necessary IAM policies."
+    },
+    {
+      "term": "What is the AWS best practice for managing IAM permissions at scale when onboarding many new employees?",
+      "definition": "Assign users to IAM Groups and attach policies to the Groups instead of individual users.",
+      "explanation": "Instead of managing policies for every single physical user, group users by their job function (e.g., Developers, Audit Team, Operations) and attach the required policies to those groups. This makes permission auditing and onboarding/offboarding much easier and less prone to errors."
+    }
+  ],
+  "test": [
+    {
+      "question": "A security administrator needs to review when each IAM user in the AWS account last accessed specific AWS services to identify and remove unused permissions. Which AWS feature provides this information?",
+      "options": [
+        "IAM Credentials Report",
+        "AWS CloudTrail",
+        "IAM Access Advisor",
+        "AWS Trusted Advisor"
+      ],
+      "correctIndex": 2,
+      "explanation": "IAM Access Advisor shows the service permissions granted to a user and exactly when those services were last accessed. You use this information to revise policies and enforce the principle of least privilege."
+    },
+    {
+      "question": "A company requires all IAM users to change their AWS Management Console passwords every 90 days, and they must include at least one number and one special character. How can a Solutions Architect enforce this requirement?",
+      "options": [
+        "Create an IAM JSON policy with a Condition block enforcing the 90-day limit and attach it to all users.",
+        "Configure an IAM Password Policy at the account level.",
+        "Use AWS Secrets Manager to automatically rotate IAM user passwords every 90 days.",
+        "Enable AWS Organizations and apply a Service Control Policy (SCP) for password complexity."
+      ],
+      "correctIndex": 1,
+      "explanation": "An IAM Password Policy is specifically designed to enforce password complexity (length, character types), password expiration (e.g., 90 days), and prevent password reuse for all IAM users in an AWS account."
+    },
+    {
+      "question": "A company is migrating its application to AWS. The application runs on Amazon EC2 instances and requires read and write access to an Amazon S3 bucket. What is the MOST secure way to grant the EC2 instances access to the S3 bucket?",
+      "options": [
+        "Create an IAM User, generate Access Keys, and embed them in the application code.",
+        "Create an IAM Role with the required S3 permissions and attach it to the EC2 instances.",
+        "Store the AWS Account Root User credentials in a configuration file on the EC2 instance.",
+        "Create a Resource-Based Policy on the EC2 instance allowing S3 access."
+      ],
+      "correctIndex": 1,
+      "explanation": "To grant permissions to AWS services (like EC2) to perform actions on your behalf, you must assign them an IAM Role. You should never share or embed Access Keys in your instances or code."
+    },
+    {
+      "question": "An IT manager is creating IAM Groups to map the company's organizational chart. They want to create a 'GlobalAdmins' group and nest the 'NetworkAdmins' and 'DatabaseAdmins' groups inside it. Is this supported in AWS IAM?",
+      "options": [
+        "Yes, IAM supports group nesting up to 3 levels deep.",
+        "No, IAM Groups can only contain IAM Users, not other groups.",
+        "Yes, but only if configured via the AWS CLI and not the Management Console.",
+        "No, IAM Groups can only be nested if they share the exact same IAM Policies."
+      ],
+      "correctIndex": 1,
+      "explanation": "In AWS IAM, Groups can only contain users, not other groups. Users, however, can belong to multiple groups simultaneously."
+    },
+    {
+      "question": "A developer needs to interact with AWS services programmatically from their local workstation using the AWS Command Line Interface (CLI) and Python SDK (Boto3). How should the developer authenticate?",
+      "options": [
+        "By using their IAM Username and Password in the CLI configuration.",
+        "By generating and using an Access Key ID and Secret Access Key.",
+        "By using an MFA hardware device to generate temporary SSH tokens.",
+        "By attaching an IAM Role directly to their local workstation."
+      ],
+      "correctIndex": 1,
+      "explanation": "To access AWS programmatically via the CLI or SDK, users must use Access Keys (composed of an Access Key ID and a Secret Access Key). IAM roles cannot be directly attached to on-premises workstations without using external identity federation or AWS Systems Manager."
+    },
+    {
+      "question": "A company wants to enforce Multi-Factor Authentication (MFA) for its developers. Some developers prefer using their smartphones, while others request a physical device that can plug into their computer's USB port to support multiple IAM users. Which MFA options correspond to these needs?",
+      "options": [
+        "Google Authenticator and a Hardware Key Fob (like Gemalto).",
+        "Authy and a U2F Security Key (like YubiKey).",
+        "AWS Mobile Authenticator and AWS Hardware MFA Device.",
+        "Virtual MFA and AWS Secrets Manager."
+      ],
+      "correctIndex": 1,
+      "explanation": "Authy is a virtual MFA application that runs on smartphones. A U2F Security Key, like YubiKey, plugs into a USB port and specifically supports multiple root and IAM users using a single security key, matching the developers' requirements perfectly."
+    },
+    {
+      "question": "A third-party auditing firm requires read-only access to a company's AWS account for a compliance review. The access is temporary and will be revoked after two weeks. What is the AWS recommended best practice to grant this access?",
+      "options": [
+        "Create a new IAM User for the auditor and share the password.",
+        "Share the Root Account credentials temporarily and change the password later.",
+        "Create an IAM Role with a cross-account trust policy allowing the auditor's AWS account to assume it.",
+        "Generate an IAM Credentials Report and email it to the auditor."
+      ],
+      "correctIndex": 2,
+      "explanation": "For granting access to third parties or users in other AWS accounts, the best practice is to use an IAM Role with cross-account access. This allows the external user to assume the role and receive temporary security credentials, completely avoiding the need to create new IAM users or share long-term passwords."
+    },
+    {
+      "question": "Which of the following components are REQUIRED when structuring a valid IAM Policy statement?",
+      "options": [
+        "Action, Principal, Condition",
+        "Effect, Action, Resource",
+        "Sid, Version, Condition",
+        "Effect, Condition, Resource"
+      ],
+      "correctIndex": 1,
+      "explanation": "An IAM policy statement requires at least an Effect (Allow or Deny), an Action (the API call being allowed/denied), and a Resource (the AWS entity it applies to). While 'Principal' is required in Resource-based policies, it is not required in identity-based IAM policies. 'Sid' and 'Condition' are optional."
+    },
+    {
+      "question": "A compliance team requires a monthly list of all IAM users in the AWS account, including the status of their passwords and whether Multi-Factor Authentication (MFA) is enabled. How can the Solutions Architect automate the retrieval of this information?",
+      "options": [
+        "Query the IAM Access Advisor.",
+        "Generate an IAM Credentials Report.",
+        "Use AWS CloudTrail logs.",
+        "Use Amazon Inspector."
+      ],
+      "correctIndex": 1,
+      "explanation": "The IAM Credentials Report is an account-level report that lists all users in your account and the status of their various credentials, including passwords, access keys, and MFA devices."
+    },
+    {
+      "question": "What is the primary benefit of enforcing Multi-Factor Authentication (MFA) for IAM users and the root account?",
+      "options": [
+        "It prevents users from reusing old passwords.",
+        "It encrypts the network connection between the user and the AWS Console.",
+        "It protects the account from unauthorized access even if the password is stolen.",
+        "It automatically rotates access keys every 90 days."
+      ],
+      "correctIndex": 2,
+      "explanation": "The main benefit of MFA is that if a password is stolen or hacked, the account is not compromised because the attacker would also need physical access to the MFA device (something the user owns)."
+    },
+    {
+      "question": "A new developer has been granted an IAM User account. When logging into the AWS Management Console, they have access to Amazon S3, but they receive an 'Access Denied' error when trying to provision an Amazon EC2 instance. What is the AWS principle causing this restriction?",
+      "options": [
+        "Implicit Deny based on the Least Privilege Principle.",
+        "MFA is not enabled on the developer's account.",
+        "The developer's IAM User is not part of a Group.",
+        "The EC2 service requires a separate set of Access Keys."
+      ],
+      "correctIndex": 0,
+      "explanation": "In AWS, all access is implicitly denied by default. The principle of least privilege dictates that users are given no permissions unless explicitly allowed by an IAM Policy. Since no policy explicitly allows EC2 access, the action is denied."
+    },
+    {
+      "question": "A developer is writing a backend application in Node.js that needs to read data from an Amazon DynamoDB table and upload files to Amazon S3. What AWS tool should the developer use to interact with these services directly from the application code?",
+      "options": [
+        "AWS Command Line Interface (CLI)",
+        "AWS Software Development Kit (SDK)",
+        "AWS Management Console",
+        "AWS IAM Access Advisor"
+      ],
+      "correctIndex": 1,
+      "explanation": "The AWS SDK provides language-specific APIs (like Node.js, Python, Java) that are embedded directly within your application code to programmatically access and manage AWS services."
+    },
+    {
+      "question": "A company is onboarding 50 new developers to their AWS environment. The security team wants to ensure that permissions are easy to manage and that programmatic access is secure. Which combination of IAM best practices should the Solutions Architect implement?",
+      "options": [
+        "Attach IAM policies directly to each user and share one master Access Key pair among the team.",
+        "Place users into IAM Groups, attach policies to the Groups, and ensure each user generates their own Access Keys.",
+        "Give each developer access to the AWS Account Root User credentials.",
+        "Use IAM Roles for developers to log into the AWS CLI without needing Access Keys."
+      ],
+      "correctIndex": 1,
+      "explanation": "AWS best practices dictate assigning permissions to Groups rather than individual users for easier management, ensuring one physical user equals one AWS user, and requiring individual Access Keys for programmatic access (never sharing keys)."
+    },
+    {
+      "question": "An organization is using AWS CloudFormation to automatically provision infrastructure. The CloudFormation service needs permissions to create Amazon VPCs, EC2 instances, and RDS databases. How should these permissions be granted?",
+      "options": [
+        "Create an IAM User for CloudFormation and embed the Access Keys in the CloudFormation template.",
+        "Enable a Resource-based policy on every EC2 instance and RDS database.",
+        "Pass an IAM Role to the AWS CloudFormation service.",
+        "Use the AWS Account Root User credentials to execute the CloudFormation stack."
+      ],
+      "correctIndex": 2,
+      "explanation": "Just like Amazon EC2, AWS services such as AWS CloudFormation and AWS Lambda need permissions to perform actions on your behalf. You must create an IAM Role with the necessary policies and pass it to the service."
+    }
+  ]
+}
