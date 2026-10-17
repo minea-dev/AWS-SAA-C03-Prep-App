@@ -30,6 +30,16 @@
       "term": "A company needs to host an application that strictly requires single-digit millisecond latency for users in Los Angeles. However, the nearest standard AWS Region is us-west-1 (Northern California). The company cannot accept the network latency of routing traffic to Northern California. What should the Solutions Architect recommend?",
       "definition": "Deploy the application resources in an AWS Local Zone located in Los Angeles.",
       "explanation": "AWS Local Zones place compute, storage, database, and other select AWS services closer to large population centers where no AWS Region exists today. They are specifically designed to deliver single-digit millisecond latency."
+    },
+    {
+      "term": "A financial company based in Europe is migrating to AWS. They are legally required to keep all customer data within the country to comply with strict data sovereignty laws. Which factor is the primary driver for selecting their AWS Region, and how does AWS handle this data?",
+      "definition": "Compliance requirements. AWS ensures that data never leaves a Region without the customer's explicit permission.",
+      "explanation": "The four main factors for choosing an AWS Region are Compliance, Proximity (latency), Service Availability, and Pricing. For legal data sovereignty, choosing a specific region ensures compliance because AWS architecture guarantees data residency within the selected region."
+    },
+    {
+      "term": "A Solutions Architect is designing a new cloud architecture and needs to configure user permissions, DNS routing, and provision compute instances. Which of the following services operate globally and do NOT require selecting a specific AWS Region?",
+      "definition": "AWS IAM (Identity and Access Management) and Amazon Route 53.",
+      "explanation": "AWS IAM, Route 53, CloudFront, and WAF are Global Services. Most other services, such as Amazon EC2, VPC, and Lambda, are Region-scoped and require you to select a specific region before provisioning resources."
     }
   ],
   "test": [
@@ -98,6 +108,28 @@
       ],
       "correctIndex": 3,
       "explanation": "AWS Local Zones place compute, storage, database, and other select AWS services closer to large population centers where no AWS Region exists today. They are specifically designed to deliver single-digit millisecond latency."
+    },
+    {
+      "question": "A healthcare startup based in Germany is moving its application to AWS. Due to strict data sovereignty laws, all patient data must remain within the country. The Solutions Architect selects the eu-central-1 region. How can the architect guarantee that data will not be moved to another region?",
+      "options": [
+        "Configure AWS Organizations to block Cross-Region Replication.",
+        "No action is needed. AWS data never leaves a Region without explicit customer permission.",
+        "Create an IAM policy that denies the s3:Transfer endpoint.",
+        "Use Amazon VPC endpoints to isolate the region."
+      ],
+      "correctIndex": 1,
+      "explanation": "One of the fundamental principles of AWS Regions is compliance with data governance. Data is never moved between regions by AWS unless explicitly configured or permitted by the customer."
+    },
+    {
+      "question": "A Solutions Architect is provisioning resources for a new application. Which of the following AWS services operate globally and are NOT bound to a specific AWS Region?",
+      "options": [
+        "Amazon EC2 and Amazon VPC",
+        "AWS Lambda and Amazon S3",
+        "AWS IAM and Amazon Route 53",
+        "Amazon RDS and Amazon DynamoDB"
+      ],
+      "correctIndex": 2,
+      "explanation": "AWS Identity and Access Management (IAM), Amazon Route 53, Amazon CloudFront, and AWS WAF are Global Services. Compute, networking, and most database services (like EC2, VPC, Lambda, and RDS) are Region-scoped."
     }
   ]
 }
