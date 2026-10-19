@@ -3,6 +3,6 @@
   { "id": "iam", "title": "AWS Identity & Access Management (IAM)", "file": "data/iam.json", "active": true },
   { "id": "ec2_basics", "title": "Amazon EC2 – Basics", "file": "data/ec2_basics.json", "active": true },
   { "id": "ec2_associate", "title": "Amazon EC2 – Associate", "file": "data/ec2_associate.json", "active": true },
-  { "id": "s3_basics", "title": "Amazon S3", "file": "data/s3_basics.json", "active": false },
+  { "id": "s3_basics", "title": "Amazon EC2 – Instance Storage", "file": "data/ec2_instance_storage.json", "active": true },
   { "id": "vpc", "title": "Amazon VPC", "file": "data/vpc.json", "active": false }
 ]
