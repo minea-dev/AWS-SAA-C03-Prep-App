@@ -1,0 +1,350 @@
+{
+  "title": "Amazon EC2 – Instance Storage",
+  "study": [
+    {
+      "term": "Concept: Elastic Block Store (EBS) Volumes",
+      "definition": "A persistent, network-attached storage drive that you can mount to your EC2 instances.",
+      "explanation": "EBS volumes use the network to communicate with the instance, which introduces slight latency compared to local hardware drives. They are strictly locked to a single Availability Zone (AZ); an EBS volume in us-east-1a cannot be directly attached to an instance in us-east-1b. You are billed for the provisioned capacity (Size in GBs and IOPS), even if the drive is empty."
+    },
+    {
+      "term": "Concept: Moving EBS Volumes Across AZs or Regions",
+      "definition": "The process of migrating an EBS volume to a different Availability Zone or AWS Region using Snapshots.",
+      "explanation": "Because an EBS volume is locked to its specific AZ, you cannot simply detach it and move it to another AZ. To migrate it, you must first take an EBS Snapshot of the volume, copy that snapshot to the target AZ or Region, and then restore a new EBS volume from that copied snapshot."
+    },
+    {
+      "term": "Concept: EBS Delete on Termination Attribute",
+      "definition": "A configuration setting that dictates whether an attached EBS volume is destroyed when the EC2 instance is terminated.",
+      "explanation": "By default, the Root EBS volume (where the OS is installed) has the 'Delete on Termination' attribute enabled, meaning it will be destroyed when the instance is terminated. Conversely, any additional attached data volumes have this attribute disabled by default, meaning they will be preserved. These defaults can be modified via the AWS Console or CLI."
+    },
+    {
+      "term": "Concept: EBS Snapshots",
+      "definition": "Point-in-time backups of an EBS volume stored in Amazon S3.",
+      "explanation": "Snapshots are incremental backups. While it is not strictly necessary to detach the volume to take a snapshot, it is highly recommended to stop the instance or detach the volume to ensure data consistency. Snapshots can be easily copied across different Availability Zones and AWS Regions."
+    },
+    {
+      "term": "Concept: EBS Snapshot Features (Archive, Recycle Bin, FSR)",
+      "definition": "Advanced management features for EBS Snapshots to optimize costs, prevent data loss, and improve restore performance.",
+      "explanation": "1) Snapshot Archive: Moves rarely accessed snapshots to a storage tier that is up to 75% cheaper, but restoring takes 24 to 72 hours. 2) Recycle Bin: Retains deleted snapshots for a specified period (1 day to 1 year) to recover from accidental deletions. 3) Fast Snapshot Restore (FSR): Forces full initialization of a snapshot so the restored volume delivers maximum performance immediately, avoiding the standard 'lazy loading' latency (comes at a high extra cost)."
+    },
+    {
+      "term": "Concept: Amazon Machine Image (AMI) Overview & Process",
+      "definition": "A pre-configured template containing the OS, software, and configuration required to launch an EC2 instance.",
+      "explanation": "AMIs allow for much faster boot times since the software is pre-packaged rather than installed at launch via User Data. Like EBS volumes, AMIs are bound to a specific AWS Region but can be copied to other regions. To create a custom AMI: customize an instance, stop it (to ensure data integrity), and build the AMI (which automatically creates underlying EBS snapshots of the attached volumes)."
+    },
+    {
+      "term": "Concept: EC2 Instance Store",
+      "definition": "High-performance, ephemeral hardware storage physically attached to the host computer running the EC2 instance.",
+      "explanation": "Instance Store provides significantly better I/O performance (millions of IOPS) compared to network-attached EBS volumes. However, it is 'ephemeral'—if the instance is stopped, terminated, or if the underlying hardware fails, all data is permanently lost. It is best used for temporary data, buffers, caches, and scratch data. Backups and replication are entirely the user's responsibility."
+    },
+    {
+      "term": "Concept: EBS Volume Types (SSD vs. HDD)",
+      "definition": "The six different categories of EBS storage, optimized for varying workloads and cost requirements.",
+      "explanation": "Solid State Drives (SSD): gp2/gp3 (General Purpose, balances price/performance) and io1/io2 Block Express (Provisioned IOPS, highest performance for mission-critical, low-latency workloads). Hard Disk Drives (HDD): st1 (Throughput Optimized, for frequently accessed, throughput-intensive workloads like Big Data) and sc1 (Cold HDD, lowest cost for infrequently accessed data). Crucial exam fact: Only SSDs (gp2/gp3, io1/io2) can be used as boot (root) volumes."
+    },
+    {
+      "term": "Concept: EBS General Purpose SSD (gp2 vs. gp3)",
+      "definition": "Cost-effective SSD volumes designed to balance price and performance for a wide variety of workloads, including system boot volumes and medium-sized databases.",
+      "explanation": "With gp2, the IOPS and throughput are strictly linked to the provisioned size of the volume (3 IOPS per GiB). With the newer gp3, you get a baseline of 3,000 IOPS and 125 MiB/s throughput, and you can independently scale IOPS (up to 80,000) and throughput (up to 2,000 MiB/s) without needing to buy more storage capacity."
+    },
+    {
+      "term": "Concept: EBS Provisioned IOPS SSD (io1 & io2 Block Express)",
+      "definition": "Highest-performance SSD volumes designed for mission-critical, low-latency, or high-throughput workloads that require sustained IOPS performance.",
+      "explanation": "These are ideal for large relational database workloads. io1 supports up to 64,000 PIOPS (on Nitro instances). io2 Block Express delivers sub-millisecond latency and supports up to 256,000 PIOPS. Both allow you to provision IOPS independently from storage size, and both uniquely support the EBS Multi-Attach feature."
+    },
+    {
+      "term": "Concept: EBS Hard Disk Drives (st1 vs. sc1)",
+      "definition": "Low-cost HDD volumes optimized for large, sequential workloads rather than random I/O. They CANNOT be used as boot (root) volumes.",
+      "explanation": "Throughput Optimized HDD (st1) is designed for frequently accessed, throughput-intensive workloads like Big Data, Data Warehouses, and Log Processing. Cold HDD (sc1) is the absolute lowest-cost storage option, designed for infrequently accessed workloads where keeping costs down is the primary goal."
+    },
+    {
+      "term": "Concept: EBS Multi-Attach",
+      "definition": "A feature that allows you to attach a single EBS volume to multiple EC2 instances simultaneously within the same Availability Zone.",
+      "explanation": "This feature is ONLY available for Provisioned IOPS SSDs (io1 and io2). It allows up to 16 EC2 instances to have full read/write permissions to the same volume. To prevent data corruption, the application must manage concurrent write operations, requiring a cluster-aware file system (standard file systems like XFS or EXT4 will not work)."
+    },
+    {
+      "term": "Concept: EBS Encryption & How to Encrypt an Unencrypted Volume",
+      "definition": "EBS encryption secures data at rest, data in flight, and all associated snapshots using KMS (AES-256) transparently with minimal latency impact.",
+      "explanation": "You cannot directly toggle encryption on an existing unencrypted volume. To encrypt it, you must follow a 3-step process: 1) Create a snapshot of the unencrypted volume. 2) Copy that snapshot and check the box to encrypt the copy. 3) Create a new EBS volume from the encrypted snapshot and attach it to your instance."
+    },
+    {
+      "term": "Concept: Amazon EFS (Elastic File System) Overview",
+      "definition": "A fully managed, highly available, scalable Network File System (NFS) that can be mounted to hundreds of EC2 instances simultaneously across multiple AZs.",
+      "explanation": "EFS uses the NFSv4.1 protocol and relies on Security Groups for access control. It is ONLY compatible with Linux-based AMIs (POSIX standard), meaning it does not work with Windows instances. Storage scales automatically, and you pay only for what you use (no capacity planning needed), but it is significantly more expensive than EBS."
+    },
+    {
+      "term": "Concept: EFS Performance & Throughput Modes",
+      "definition": "Configuration settings that define how EFS handles latency, parallel operations, and data transfer rates.",
+      "explanation": "Performance Modes: 'General Purpose' is the default and is best for latency-sensitive workloads (web servers, CMS). 'Max I/O' sacrifices some latency to support highly parallel, high-throughput tasks (Big Data). Throughput Modes: 'Bursting' scales with size, 'Provisioned' allows setting a fixed throughput regardless of size, and 'Elastic' automatically scales throughput up/down for unpredictable workloads."
+    },
+    {
+      "term": "Concept: EFS Storage Classes & Lifecycle Management",
+      "definition": "Tiered storage options within EFS that allow you to optimize costs by moving less frequently accessed files to cheaper tiers.",
+      "explanation": "EFS has three main tiers: Standard (frequent access), Infrequent Access (EFS-IA, cheaper storage but incurs retrieval costs), and Archive (rarely accessed, 50% cheaper than IA). You can use Lifecycle Policies to automatically move files between these tiers after 'N' days. You can also choose EFS One Zone for dev/test environments to save over 90% compared to Multi-AZ standard EFS."
+    },
+    {
+      "term": "Concept: EBS vs. EFS Comparison",
+      "definition": "The architectural choice between block storage (EBS) and network file storage (EFS).",
+      "explanation": "Use EBS when you need high-performance block storage locked to a single AZ and attached to a single instance (unless using io1/io2 Multi-Attach). Use EFS when you need a shared, POSIX-compliant file system that spans multiple AZs and can be mounted by hundreds of Linux instances simultaneously (e.g., shared WordPress files). EFS is more expensive but highly scalable across an entire region."
+    }
+  ],
+  "test": [
+    {
+      "question": "A developer has an EBS volume attached to an EC2 instance in the `us-east-1a` Availability Zone. They are migrating their architecture and need to attach this exact data volume to a new instance in `us-east-1b`. How can this be achieved?",
+      "options": [
+        "Detach the EBS volume, modify its AZ property in the console, and attach it to the new instance.",
+        "Create an Elastic File System (EFS) mount target in `us-east-1b` and sync the volume.",
+        "Take a snapshot of the EBS volume, copy or restore the snapshot to create a new volume in `us-east-1b`, and attach it.",
+        "Use the EBS Multi-Attach feature to mount the volume to both instances simultaneously across AZs."
+      ],
+      "correctIndex": 2,
+      "explanation": "EBS volumes are strictly locked to a single Availability Zone. You cannot directly move them or attach them across AZs. To migrate the data, you must take a snapshot of the volume and restore that snapshot to a new EBS volume in the target AZ."
+    },
+    {
+      "question": "An application requires a high-performance, temporary caching layer that can deliver millions of IOPS. The data is entirely reproducible, meaning data loss upon instance termination or stopping is completely acceptable. Which storage solution provides the highest I/O performance for this specific use case?",
+      "options": [
+        "Amazon EFS in Max I/O mode",
+        "EC2 Instance Store",
+        "EBS Provisioned IOPS SSD (io2 Block Express)",
+        "EBS General Purpose SSD (gp3)"
+      ],
+      "correctIndex": 1,
+      "explanation": "EC2 Instance Store provides ephemeral, hardware-attached storage that delivers significantly higher I/O performance (millions of IOPS) than network-attached EBS volumes. Because the data is temporary and data loss is acceptable, it is the perfect fit for high-speed caches and buffers."
+    },
+    {
+      "question": "An administrator manually terminates an EC2 instance to clean up unused resources. Upon checking the AWS console, they realize the root volume was deleted, but an additional 100 GB EBS data volume attached to the same instance was left behind. Why did this happen?",
+      "options": [
+        "The secondary volume was an Instance Store volume, which persists automatically.",
+        "By default, the 'Delete on Termination' attribute is enabled for the root volume but disabled for any additional attached EBS volumes.",
+        "The administrator did not stop the instance before terminating it.",
+        "EBS volumes must be manually detached before an instance can be terminated."
+      ],
+      "correctIndex": 1,
+      "explanation": "AWS default behavior is to delete the root EBS volume (where the OS resides) upon instance termination. However, any additional secondary EBS volumes attached to the instance have the 'Delete on Termination' attribute disabled by default, meaning they persist unless explicitly configured otherwise."
+    },
+    {
+      "question": "A company wants to provision a new EC2 instance and needs to select the most cost-effective EBS volume type for the root boot volume. Which of the following EBS volume types CANNOT be used as a boot volume?",
+      "options": [
+        "gp2",
+        "gp3",
+        "io1",
+        "st1 and sc1"
+      ],
+      "correctIndex": 3,
+      "explanation": "Hard Disk Drives (HDD), which include Throughput Optimized HDD (st1) and Cold HDD (sc1), cannot be used as boot (root) volumes. Only Solid State Drives (SSD) like gp2, gp3, io1, and io2 can serve as root volumes."
+    },
+    {
+      "question": "A team is currently using a 500 GB gp2 EBS volume for their database. They need to increase the IOPS and throughput of the volume to handle a spike in traffic, but they do NOT want to pay for additional storage capacity. Which action should they take?",
+      "options": [
+        "Migrate the volume to gp3, which allows independent scaling of IOPS and throughput.",
+        "Increase the provisioned size of the gp2 volume to 1000 GB to automatically double the IOPS.",
+        "Enable Fast Snapshot Restore (FSR) on the gp2 volume.",
+        "Attach a secondary st1 volume and stripe the data across both drives."
+      ],
+      "correctIndex": 0,
+      "explanation": "With gp2 volumes, IOPS and throughput are strictly linked to the size of the volume (3 IOPS per GiB). To increase performance without paying for more storage space, you should migrate to gp3, which allows you to independently provision IOPS and throughput."
+    },
+    {
+      "question": "A critical Linux-based clustered application requires concurrent read and write access to the same shared block storage volume from 5 different EC2 instances located in the same Availability Zone. Which EBS volume type and feature supports this requirement?",
+      "options": [
+        "EBS General Purpose SSD (gp3) with Multi-Attach",
+        "Amazon EFS with Max I/O performance mode",
+        "EBS Provisioned IOPS SSD (io1 or io2) with Multi-Attach",
+        "Throughput Optimized HDD (st1) with Multi-Attach"
+      ],
+      "correctIndex": 2,
+      "explanation": "The EBS Multi-Attach feature allows up to 16 EC2 instances in the same AZ to concurrently attach and read/write to a single EBS volume. This feature is EXCLUSIVELY supported on Provisioned IOPS SSDs (io1 and io2). (Note: The application must use a cluster-aware file system)."
+    },
+    {
+      "question": "A security audit reveals that an existing EBS volume containing sensitive customer data is currently unencrypted. The security team mandates that this volume must be encrypted immediately. What is the correct procedure to encrypt the existing volume?",
+      "options": [
+        "Take a snapshot of the unencrypted volume, copy the snapshot and select the encryption option, then restore a new encrypted EBS volume from that copy.",
+        "Select the EBS volume in the AWS Management Console and toggle the 'Enable KMS Encryption' checkbox.",
+        "Detach the volume, run a Linux CLI command to encrypt the blocks, and reattach it.",
+        "Create a new encrypted EFS file system and use AWS DataSync to move the block data."
+      ],
+      "correctIndex": 0,
+      "explanation": "You cannot directly encrypt an existing unencrypted EBS volume. The required procedure is to create a snapshot of the unencrypted volume, copy that snapshot while enabling encryption, and finally create a new encrypted volume from the encrypted snapshot copy."
+    },
+    {
+      "question": "A company is designing a highly available WordPress architecture. They need a shared file system to store WordPress assets (images, themes) that can be mounted simultaneously by hundreds of EC2 Linux instances distributed across three Availability Zones. Which storage service is the best fit?",
+      "options": [
+        "EBS Provisioned IOPS (io2) with Multi-Attach",
+        "Amazon S3 Glacier",
+        "Amazon EFS (Elastic File System)",
+        "EC2 Instance Store"
+      ],
+      "correctIndex": 2,
+      "explanation": "Amazon EFS is a fully managed Network File System (NFS) that can be mounted by hundreds or thousands of Linux EC2 instances concurrently. Unlike EBS Multi-Attach (which is restricted to a single AZ and 16 instances), EFS spans multiple Availability Zones natively, making it perfect for highly available web applications like WordPress."
+    },
+    {
+      "question": "A media processing company restored an EBS volume from a snapshot. However, they notice that the application experiences significant latency when accessing blocks of data on the new volume for the very first time. Which feature can they enable (at an additional cost) to eliminate this initial latency?",
+      "options": [
+        "EBS Snapshot Archive",
+        "Fast Snapshot Restore (FSR)",
+        "Elastic Throughput",
+        "Provisioned IOPS"
+      ],
+      "correctIndex": 1,
+      "explanation": "When an EBS volume is restored from a snapshot, it experiences 'lazy loading' (data is pulled from S3 into the volume only when accessed for the first time), causing latency. Fast Snapshot Restore (FSR) forces the full initialization of the snapshot immediately, delivering maximum performance on first use."
+    },
+    {
+      "question": "A data analytics firm relies on Amazon EFS to store petabytes of data. They realize that 80% of their files are only accessed once a year for compliance audits, and they want to reduce storage costs significantly without deleting the files. What is the most cost-effective approach?",
+      "options": [
+        "Migrate the data to EBS Cold HDD (sc1) volumes.",
+        "Change the EFS Performance Mode to Max I/O.",
+        "Take an EBS Snapshot and move it to the Snapshot Archive tier.",
+        "Use EFS Lifecycle Policies to automatically transition infrequently accessed files to the EFS Archive storage class."
+      ],
+      "correctIndex": 3,
+      "explanation": "Amazon EFS offers storage tiers (Standard, Infrequent Access, and Archive). By implementing EFS Lifecycle Policies, the firm can automatically move files that haven't been accessed in a specified number of days to the Archive class, which is 50% cheaper than the IA tier and perfectly suited for data accessed a few times a year."
+    },
+    {
+      "question": "A big data workload requires processing massive datasets in parallel. The application requires extremely high throughput and highly parallel I/O operations from a shared file system, and is tolerant of slightly higher latencies. Which Amazon EFS performance mode should be selected at creation time?",
+      "options": [
+        "General Purpose",
+        "Max I/O",
+        "Provisioned Throughput",
+        "Elastic Throughput"
+      ],
+      "correctIndex": 1,
+      "explanation": "The 'Max I/O' performance mode in Amazon EFS is specifically designed to scale to higher levels of aggregate throughput and operations per second, making it ideal for highly parallelized applications and big data workloads. It trades slightly higher latency for massive parallel throughput."
+    },
+    {
+      "question": "A developer provisions a 2 TB EBS General Purpose (gp3) volume but only writes 50 GB of data to it. At the end of the month, how will AWS bill the developer for this storage?",
+      "options": [
+        "They will be billed only for the 50 GB of data stored.",
+        "They will be billed for the 50 GB of data stored plus a penalty for underutilization.",
+        "They will be billed for the fully provisioned capacity of 2 TB.",
+        "EBS volumes are billed entirely based on network throughput, not storage size."
+      ],
+      "correctIndex": 2,
+      "explanation": "EBS volumes are billed based on their provisioned capacity (the total Size in GBs and any provisioned IOPS/throughput), regardless of how much data is actually written to the drive."
+    },
+    {
+      "question": "A system administrator has configured a fleet of EC2 instances running Windows Server. They need a shared file system to store user profile data that scales automatically. They attempt to mount Amazon EFS to the Windows instances but fail. Why does this occur?",
+      "options": [
+        "Amazon EFS is only compatible with Linux-based AMIs because it relies on the POSIX file system standard.",
+        "The administrator forgot to attach the EFS instances to the correct Active Directory domain.",
+        "EFS requires the 'Max I/O' performance mode to work with Windows.",
+        "Windows Server requires EBS Multi-Attach instead of EFS."
+      ],
+      "correctIndex": 0,
+      "explanation": "Amazon EFS uses the NFSv4.1 protocol and is fundamentally a POSIX-compliant file system. It is strictly compatible with Linux-based EC2 instances and does not support Windows Server instances (Windows workloads typically use Amazon FSx for Windows File Server instead)."
+    },
+    {
+      "question": "A company takes daily EBS snapshots for disaster recovery. However, they want to protect against accidental deletion of these snapshots by junior administrators. Which feature should they enable?",
+      "options": [
+        "Snapshot Archive",
+        "EBS Recycle Bin",
+        "Amazon S3 Versioning",
+        "AWS Backup Vault Lock"
+      ],
+      "correctIndex": 1,
+      "explanation": "The Recycle Bin for EBS Snapshots allows you to set up retention rules so that if a snapshot is accidentally deleted, it is kept in the Recycle Bin for a specified period (between 1 day and 1 year) and can be easily recovered."
+    },
+    {
+      "question": "When you create a custom Amazon Machine Image (AMI) from an existing EC2 instance to use as a template, what happens to the data stored on the attached EBS volumes during the creation process?",
+      "options": [
+        "The data is permanently deleted to sanitize the AMI.",
+        "The data is copied to a temporary EC2 Instance Store.",
+        "The data is migrated to Amazon EFS.",
+        "AWS automatically creates underlying EBS snapshots of the attached volumes to package within the AMI."
+      ],
+      "correctIndex": 3,
+      "explanation": "An AMI is essentially a pre-packaged template of your instance. When you build a custom AMI, AWS takes point-in-time EBS snapshots of all the attached EBS volumes to save the OS, software, and configuration data so it can be replicated when launching new instances."
+    },
+	{
+    "question": "You have just terminated an EC2 instance in us-east-1a, and its attached EBS volume is now available. Your teammate tries to attach it to an EC2 instance in us-east-1b but he can't. What is a possible cause for this?",
+    "options": [
+      "He's missing IAM permissions",
+      "EBS volumes are locked to an AWS Region",
+      "EBS volumes are locked to an Availability Zone"
+    ],
+    "correctIndex": 2,
+    "explanation": "An Amazon EBS volume is strictly tied to the specific Availability Zone (AZ) in which it was created. Because it resides in us-east-1a, it can only be attached to EC2 instances within that exact same AZ and cannot be attached directly to an instance in us-east-1b."
+  },
+  {
+    "question": "You have launched an EC2 instance with two EBS volumes, Root volume type and the other EBS volume type to store the data. A month later you are planning to terminate the EC2 instance. What's the default behavior that will happen to each EBS volume?",
+    "options": [
+      "Both the root volume type and the EBS volume type will be deleted",
+      "The Root volume type will be deleted and the EBS volume type will not be deleted",
+      "The root volume type will not be deleted and the EBS volume type will be deleted",
+      "Both the root volume type and the EBS volume type will not be deleted"
+    ],
+    "correctIndex": 1,
+    "explanation": "By default, when an EC2 instance is terminated, AWS automatically deletes its root EBS volume (the DeleteOnTermination attribute is set to true). However, any additional non-root EBS volumes attached to the instance are kept intact (DeleteOnTermination is set to false) to prevent accidental data loss."
+  },
+  {
+    "question": "You can use an AMI in N.Virginia Region us-east-1 to launch an EC2 instance in any AWS Region.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "correctIndex": 1,
+    "explanation": "Amazon Machine Images (AMIs) are regional resources. An AMI that exists in N. Virginia (us-east-1) cannot be used directly to launch an EC2 instance in another region. To use it elsewhere, you must first copy the AMI to the target AWS destination region."
+  },
+   {
+    "question": "Which of the following EBS volume types can be used as boot volumes when you create EC2 instances?",
+    "options": [
+      "gp2, gp3, st1, sc1",
+      "gp2, gp3, io1, io2",
+      "io1, io2, st1, sc1"
+    ],
+    "correctIndex": 1,
+    "explanation": "Only Solid State Drives (SSD) can be used as boot volumes for EC2 instances. This includes General Purpose SSDs (gp2, gp3) and Provisioned IOPS SSDs (io1, io2). HDD-backed volumes like st1 and sc1 cannot be chosen as boot volumes."
+  },
+  {
+    "question": "What is EBS Multi-Attach?",
+    "options": [
+      "Attach the same EBS volume to multiple EC2 instances in multiple AZs",
+      "Attach multiple EBS volumes in the same AZ to the same EC2 instance",
+      "Attach the same EBS volume to multiple EC2 instances in the same AZ",
+      "Attach multiple EBS volumes in multiple AZs to the same EC2 instance"
+    ],
+    "correctIndex": 2,
+    "explanation": "Amazon EBS Multi-Attach enables you to attach a single Provisioned IOPS SSD (io1 or io2) volume to multiple EC2 instances. However, because EBS volumes are geographically locked, all these instances must reside within the exact same Availability Zone (AZ)."
+  },
+  {
+    "question": "You would like to encrypt an unencrypted EBS volume attached to your EC2 instance. What should you do?",
+    "options": [
+      "Create an EBS snapshot of your EBS volume. Copy the snapshot and tick the option to encrypt the copied snapshot. Then, use the encrypted snapshot to create a new EBS volume",
+      "Select your EBS volume, choose Edit Attributes, then tick the Encrypt using KMS option",
+      "Create a new encrypted EBS volume, then copy data from your unencrypted EBS volume to the new EBS volume.",
+      "Submit a request to AWS Support to encrypt your EBS volume"
+    ],
+    "correctIndex": 0,
+    "explanation": "You cannot directly encrypt an existing, unencrypted EBS volume in place. The standard procedure requires creating a snapshot of the unencrypted volume, copying that snapshot while enabling the encryption option, and finally generating a new encrypted volume from that copied snapshot."
+  },
+   {
+    "question": "You have a fleet of EC2 instances distributes across AZs that process a large data set. What do you recommend to make the same data to be accessible as an NFS drive to all of your EC2 instances?",
+    "options": [
+      "Use EBS",
+      "Use EFS",
+      "Use an Instance Store"
+    ],
+    "correctIndex": 1,
+    "explanation": "Amazon Elastic File System (Amazon EFS) provides a serverless, fully managed Network File System (NFS) that can be concurrently mounted and accessed by thousands of EC2 instances running across multiple Availability Zones (AZs)."
+  },
+  {
+    "question": "You would like to have a high-performance local cache for your application hosted on an EC2 instance. You don't mind losing the cache upon the termination of your EC2 instance. Which storage mechanism do you recommend as a Solutions Architect?",
+    "options": [
+      "EBS",
+      "EFS",
+      "Instance Store"
+    ],
+    "correctIndex": 2,
+    "explanation": "An Instance Store provides temporary block-level storage that is physically attached to the host computer. This delivers ultra-high performance, extremely low latency, and high IOPS, making it the perfect choice for temporary caches, scratch pads, or buffer datasets where data persistence beyond the instance life cycle is not required."
+  },
+  {
+    "question": "You are running a high-performance database that requires an IOPS of 310,000 for its underlying storage. What do you recommend?",
+    "options": [
+      "Use an EBS gp2 drive",
+      "Use an EBS io1 drive",
+      "Use an EC2 Instance Store",
+      "Use an EBS io2 Block Express drive"
+    ],
+    "correctIndex": 3,
+    "explanation": "Amazon EBS io2 Block Express volumes are designed to meet the requirements of the most demanding high-performance databases. They offer sub-millisecond latency and can scale up to 256,000 IOPS per single volume, allowing you to achieve 310,000 IOPS easily by stripping volumes together, whereas standard io1, gp2, or gp3 configurations cannot reach these extreme thresholds on their own."
+  }
+  ]
+}
