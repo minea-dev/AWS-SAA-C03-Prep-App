@@ -1,0 +1,244 @@
+{
+  "title": "Amazon EC2 – Associate",
+  "study": [
+    {
+      "term": "Concept: Private vs. Public IPv4 Addresses",
+      "definition": "Public IPs are globally unique and internet-routable, whereas Private IPs are only unique within a private network and cannot route directly to the internet.",
+      "explanation": "In AWS, a Private IP is used for internal network communication within a VPC. Two different companies can use the same Private IP ranges in their own isolated networks. To connect a private machine to the internet (WWW), it must use a NAT device and an Internet Gateway. Public IPs are strictly unique across the entire web and can be easily geolocated."
+    },
+    {
+      "term": "Concept: Default EC2 IP Behavior & SSH Access",
+      "definition": "By default, an EC2 instance is assigned both a Private IP (for internal AWS networking) and a Public IP (for internet access).",
+      "explanation": "When you SSH into an EC2 instance from your local computer over the internet, you MUST use the Public IP, because you are not in the same private network. If you Stop and then Start your EC2 instance, its default Public IP will change. (Note: A reboot does not change the Public IP, only Stop/Start)."
+    },
+    {
+      "term": "Concept: Elastic IPs (EIP)",
+      "definition": "A static, persistent public IPv4 address that you own and can attach to one EC2 instance at a time.",
+      "explanation": "Because a standard Public IP changes when an instance is stopped and started, an Elastic IP is used when you need a fixed public endpoint. It can mask the failure of an instance by rapidly remapping the address to a standby instance. AWS strictly limits Elastic IPs to 5 per account by default to preserve the limited pool of IPv4 addresses."
+    },
+    {
+      "term": "Concept: Elastic IP Architectural Best Practices",
+      "definition": "While Elastic IPs provide a fixed public IP, relying on them is generally considered a poor architectural decision for scalability and High Availability.",
+      "explanation": "Instead of using Elastic IPs, AWS best practices recommend using a random public IP and mapping a DNS name to it via Amazon Route 53, or putting your EC2 instances behind an Elastic Load Balancer (ELB), which provides a static DNS endpoint while the backend instances remain private and scale dynamically."
+    },
+    {
+      "term": "Concept: EC2 Placement Groups Overview",
+      "definition": "A configuration that allows you to dictate the physical placement strategy of your EC2 instances on the underlying AWS hardware.",
+      "explanation": "When launching instances, you can use Placement Groups to optimize for network performance or hardware fault tolerance. There are four strategies: Cluster (low latency), Spread (strict isolation), Partition (rack-level isolation for distributed systems), and Precision Time (highly accurate clocks)."
+    },
+    {
+      "term": "Concept: Cluster Placement Group",
+      "definition": "Groups EC2 instances into a low-latency, high-bandwidth (10 Gbps) cluster within a SINGLE Availability Zone.",
+      "explanation": "Pros: Delivers the absolute best network performance between instances. Cons: It creates a single point of failure; if that specific rack or AZ fails, all instances fail simultaneously. Best Use Case: Big Data processing jobs that need to complete rapidly, and applications requiring extremely low latency and high network throughput."
+    },
+    {
+      "term": "Concept: Spread Placement Group",
+      "definition": "Strictly places each EC2 instance on entirely different underlying physical hardware (different racks, separate power and network).",
+      "explanation": "Pros: Reduces the risk of simultaneous failure, and can span across multiple Availability Zones. Cons: It is strictly limited to a maximum of 7 instances per AZ per placement group. Best Use Case: Maximizing High Availability for critical applications where each instance must be isolated from the physical hardware failure of the others."
+    },
+    {
+      "term": "Concept: Partition Placement Group",
+      "definition": "Spreads instances across logical 'partitions' (which rely on different sets of racks) within an AZ. Spans multiple AZs.",
+      "explanation": "Unlike Spread groups, Partition groups scale to hundreds of EC2 instances per group (up to 7 partitions per AZ). Instances in one partition do not share hardware with instances in other partitions. EC2 instances can read their partition metadata. Best Use Case: Distributed, big-data architectures that are topology-aware, such as Hadoop, Cassandra, HBase, and Apache Kafka."
+    },
+    {
+      "term": "Concept: Precision Time Placement Group",
+      "definition": "Places instances on hardware with direct access to extremely accurate, high-precision time sources.",
+      "explanation": "It leverages the Enhanced Amazon Time Sync Service (which is more accurate than standard NTP) and uses a PTP Hardware Clock with hardware packet timestamping (currently Linux only). Best Use Case: Distributed databases, strict event ordering, and financial transaction timestamping."
+    },
+    {
+      "term": "Concept: Elastic Network Interface (ENI)",
+      "definition": "A logical networking component in a VPC that represents a virtual network card for an EC2 instance.",
+      "explanation": "An ENI can possess multiple attributes: a primary private IPv4, one or more secondary private IPv4s, one Elastic IP per private IPv4, one Public IPv4, a MAC address, and one or more Security Groups. Every EC2 instance has a primary ENI (eth0) that cannot be detached."
+    },
+    {
+      "term": "Concept: ENI Failover & AZ Binding",
+      "definition": "ENIs can be created independently and moved dynamically between EC2 instances for rapid failover, but they are strictly bound to a single Availability Zone (AZ).",
+      "explanation": "If an EC2 instance fails, you can detach its secondary ENI and attach it to a standby instance on the fly. This routes the traffic to the standby machine immediately. However, you cannot move an ENI to an instance in a different AZ."
+    },
+    {
+      "term": "Concept: EC2 Hibernate Overview",
+      "definition": "A feature that pauses an EC2 instance and saves its in-memory (RAM) state to the root EBS volume, allowing for much faster boot times.",
+      "explanation": "Unlike standard 'Stop' (where the OS shuts down and boots from scratch upon restart), Hibernate preserves the RAM state. When resumed, the OS and applications do not need to initialize or warm up caches. It is ideal for long-running processes or services that take a long time to start."
+    },
+    {
+      "term": "Concept: EC2 Hibernate Requirements & Limitations",
+      "definition": "Strict hardware and configuration rules required to use the EC2 Hibernate feature.",
+      "explanation": "To use Hibernate: 1) The root EBS volume MUST be encrypted, be an EBS volume (not instance store), and be large enough to hold the RAM dump. 2) The instance RAM must be less than 150 GB. 3) Bare metal instances are not supported. 4) An instance cannot remain hibernated for more than 60 days. It is available for On-Demand, Reserved, and Spot Instances."
+    }
+  ],
+  "test": [
+    {
+      "question": "A developer successfully SSH'd into an EC2 instance yesterday using its default Public IP. Today, they stopped the instance to save costs, started it again an hour later, and now their SSH connection times out. What is the most likely reason?",
+      "options": [
+        "The security group was automatically reset upon stopping the instance.",
+        "A reboot automatically assigns a new Private IP address.",
+        "Stopping and starting an EC2 instance causes its default Public IP to change.",
+        "The primary ENI (eth0) detached when the instance was stopped."
+      ],
+      "correctIndex": 2,
+      "explanation": "When you stop and then start an EC2 instance, its default Public IP address changes. A simple reboot does not change the Public IP, but a stop/start cycle does."
+    },
+    {
+      "question": "A company requires a fleet of 20 EC2 instances to have fixed, static public IP addresses. The architect points out that an AWS account only allows 5 Elastic IPs by default and suggests a better architectural approach. What is an AWS best practice for this scenario?",
+      "options": [
+        "Request an absolute limit increase for 20 Elastic IPs through AWS Support.",
+        "Place the EC2 instances behind an Elastic Load Balancer (ELB) and use its endpoint.",
+        "Attach a secondary ENI to each instance to double the Public IP capacity.",
+        "Use a Cluster Placement Group to share a single Elastic IP across all 20 instances."
+      ],
+      "correctIndex": 1,
+      "explanation": "Relying heavily on Elastic IPs is considered a poor architectural decision for scalability. AWS best practices recommend putting instances behind an Elastic Load Balancer (ELB), which provides a static DNS endpoint while the backend instances remain private and scale dynamically."
+    },
+    {
+      "question": "An analytics team is running a Hadoop big-data architecture that requires hundreds of EC2 instances spanning multiple Availability Zones. The architecture must be topology-aware to ensure that a single hardware rack failure does not take down the entire cluster. Which placement strategy is required?",
+      "options": [
+        "Cluster Placement Group",
+        "Spread Placement Group",
+        "Partition Placement Group",
+        "Precision Time Placement Group"
+      ],
+      "correctIndex": 2,
+      "explanation": "A Partition Placement Group spreads instances across logical partitions (which rely on different sets of racks), scales to hundreds of instances, can span multiple AZs, and provides partition metadata to the instances. This makes it ideal for topology-aware distributed systems like Hadoop, Cassandra, and Kafka."
+    },
+    {
+      "question": "A critical application consists of 5 EC2 instances that must be absolutely isolated from each other to maximize High Availability. They must not share the same underlying physical hardware (racks, power, or network). Which Placement Group should be used?",
+      "options": [
+        "Spread Placement Group",
+        "Cluster Placement Group",
+        "Partition Placement Group",
+        "Dedicated Placement Group"
+      ],
+      "correctIndex": 0,
+      "explanation": "A Spread Placement Group strictly places each EC2 instance on entirely different underlying physical hardware to reduce the risk of simultaneous failure. It is perfect for maximizing HA for critical applications, though it is limited to a maximum of 7 instances per AZ per group."
+    },
+    {
+      "question": "A data engineering team needs extremely low network latency and high network throughput (10 Gbps) between their instances to complete a fast big-data processing job. Which Placement Group is the best fit?",
+      "options": [
+        "Spread Placement Group",
+        "Partition Placement Group",
+        "Cluster Placement Group",
+        "Precision Time Placement Group"
+      ],
+      "correctIndex": 2,
+      "explanation": "A Cluster Placement Group groups EC2 instances into a low-latency, high-bandwidth cluster within a single Availability Zone. It provides the absolute best network performance between instances."
+    },
+    {
+      "question": "An administrator is attempting to move an Elastic Network Interface (ENI) from a failed EC2 instance in 'us-east-1a' to a standby instance located in 'us-east-1b' to perform a rapid failover. The operation fails. What is the reason?",
+      "options": [
+        "The administrator attempted to move the primary ENI (eth0), which cannot be detached.",
+        "ENIs are strictly bound to a single Availability Zone and cannot be moved to an instance in a different AZ.",
+        "The standby instance must be rebooted before it can accept a new ENI.",
+        "The Elastic IP attached to the ENI must be detached first."
+      ],
+      "correctIndex": 1,
+      "explanation": "While secondary ENIs can be detached and moved on the fly for rapid failover, they are strictly bound to a specific Availability Zone (AZ) and cannot be attached to an instance in a different AZ."
+    },
+    {
+      "question": "A legacy application hosted on an EC2 instance takes 15 minutes to initialize and warm up its in-memory caches upon startup. To save costs, the team wants to stop the instance overnight but avoid the 15-minute initialization delay the next morning. Which EC2 feature should they use?",
+      "options": [
+        "EC2 Spot Instances",
+        "Elastic Network Interfaces (ENI) warm-up",
+        "EC2 Hibernate",
+        "Cluster Placement Group"
+      ],
+      "correctIndex": 2,
+      "explanation": "EC2 Hibernate preserves the in-memory (RAM) state by saving it to the root EBS volume. When resumed, the OS and applications do not need to initialize or warm up caches, making the boot process much faster."
+    },
+    {
+      "question": "A developer attempts to enable EC2 Hibernate on a newly configured instance, but the option is unavailable. Which of the following is a mandatory requirement for using the EC2 Hibernate feature?",
+      "options": [
+        "The instance must be a bare metal instance.",
+        "The root EBS volume must be encrypted.",
+        "The instance must have more than 150 GB of RAM.",
+        "The instance must be using an Instance Store root volume."
+      ],
+      "correctIndex": 1,
+      "explanation": "To use EC2 Hibernate, strict rules apply: The root EBS volume MUST be encrypted, the volume must be EBS (not instance store), RAM must be less than 150 GB, and bare metal instances are not supported."
+    },
+    {
+      "question": "Company A and Company B both configure their internal VPCs using the exact same IP CIDR range (192.168.0.0/22). Why does this not cause a routing conflict?",
+      "options": [
+        "AWS automatically translates the IPs using an Internet Gateway.",
+        "Private IPs are only unique within their own isolated private network, not globally.",
+        "Company B is using IPv6 instead of IPv4.",
+        "They are using Elastic IPs to mask the private addresses."
+      ],
+      "correctIndex": 1,
+      "explanation": "Private IPs are only unique within a private network and cannot route directly to the internet. Therefore, two different companies can use the exact same Private IP ranges in their own isolated networks without conflict."
+    },
+    {
+      "question": "A financial institution requires instances with highly accurate clocks for strict event ordering and financial transaction timestamping. Which EC2 feature provides hardware packet timestamping and leverages the Enhanced Amazon Time Sync Service?",
+      "options": [
+        "Spread Placement Group",
+        "Precision Time Placement Group",
+        "Partition Placement Group",
+        "Elastic Network Interface (ENI)"
+      ],
+      "correctIndex": 1,
+      "explanation": "A Precision Time Placement Group places instances on hardware with direct access to extremely accurate, high-precision time sources (PTP Hardware Clock). It is specifically designed for use cases like financial timestamping and distributed databases."
+    },
+    {
+      "question": "Which of the following statements regarding Elastic Network Interfaces (ENI) is FALSE?",
+      "options": [
+        "An ENI can have a primary private IPv4 and one or more secondary IPv4s.",
+        "You can independently create and attach a secondary ENI on the fly.",
+        "Every EC2 instance has a primary ENI (eth0) that can be easily detached and moved.",
+        "An ENI can have one or more Security Groups attached to it."
+      ],
+      "correctIndex": 2,
+      "explanation": "The statement that the primary ENI (eth0) can be detached is false. While secondary ENIs can be created, attached, and detached dynamically, the primary ENI (eth0) is a permanent fixture of the EC2 instance and cannot be detached."
+    },
+	{
+    "question": "You have launched an EC2 instance that will host a NodeJS application. After installing all the required software and configured your application, you noted down the EC2 instance public IPv4 so you can access it. Then, you stopped and then started your EC2 instance to complete the application configuration. After restart, you can't access the EC2 instance, and you found that the EC2 instance public IPv4 has been changed. What should do to assign a fixed public IPv4 to your EC2 instance?",
+    "options": [
+      "Allocate an Elastic IP and assign it to your EC2 instance",
+      "From inside your EC2 instance OS, change network configuration from DHCP to static and assign it a public IPv4",
+      "Contact AWS Support and request a fixed public IPv4 to your EC2 instance",
+      "This can't be done, you can only assign a fixed private IPv4 to your EC2 instance"
+    ],
+    "correctIndex": 0,
+    "explanation": "A standard public IPv4 address assigned to an EC2 instance is dynamic and changes whenever the instance is stopped and started. To retain a persistent, fixed public IPv4 address that survives restarts, you must allocate an Elastic IP (EIP) address from the AWS console and associate it with your EC2 instance."
+  },
+  {
+    "question": "You have an application performing big data analysis hosted on a fleet of EC2 instances. You want to ensure your EC2 instances have the highest networking performance while communicating with each other. Which EC2 Placement Group should you choose?",
+    "options": [
+      "Spread Placement Group",
+      "Cluster Placement Group",
+      "Partition Placement Group"
+    ],
+    "correctIndex": 1,
+    "explanation": "A Cluster Placement Group packs instances close together inside a single Availability Zone. This strategy enables workloads to achieve the lowest possible network latency and highest network throughput for node-to-node communication, making it the ideal choice for big data analysis and high-performance computing (HPC)."
+  },
+  {
+    "question": "You have a critical application hosted on a fleet of EC2 instances in which you want to achieve maximum availability when there's an AZ failure. Which EC2 Placement Group should you choose?",
+    "options": [
+      "Cluster Placement Group",
+      "Partition Placement Group",
+      "Spread Placement Group"
+    ],
+    "correctIndex": 2,
+    "explanation": "A Spread Placement Group places each individual instance on distinct underlying hardware racks. By spreading instances across different hardware and Availability Zones, it minimizes correlated failures and provides the maximum possible availability and isolation against an individual rack or AZ failure."
+  },
+  {
+    "question": "Elastic Network Interface (ENI) can be attached to EC2 instances in another AZ.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "correctIndex": 1,
+    "explanation": "An Elastic Network Interface (ENI) is a regional resource but is strictly bound to a specific Availability Zone (AZ). Therefore, it cannot be attached to or moved to an EC2 instance residing in a different Availability Zone."
+  },
+  {
+    "question": "The following are true regarding EC2 Hibernate, EXCEPT:",
+    "options": [
+      "EC2 Instance Root Volume must be an Instance Store volume",
+      "Supports On-Demand and Reserved Instances",
+      "EC2 Instance RAM must be less than 150GB",
+      "EC2 Instance Root Volume type must be an EBS volume"
+    ],
+    "correctIndex": 0,
+    "explanation": "To hibernate an EC2 instance, the root volume must be an Amazon EBS volume (and it must be encrypted) so that the RAM contents can be successfully dumped and saved to it. Instance Store volumes are ephemeral and lose their data when an instance is stopped or hibernated, making them incompatible as root volumes for hibernation."
+  }
+  ]
+}
