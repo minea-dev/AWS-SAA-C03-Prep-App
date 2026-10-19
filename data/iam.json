@@ -221,6 +221,104 @@
       ],
       "correctIndex": 2,
       "explanation": "Just like Amazon EC2, AWS services such as AWS CloudFormation and AWS Lambda need permissions to perform actions on your behalf. You must create an IAM Role with the necessary policies and pass it to the service."
-    }
+    },
+    {
+      "question": "What is a proper definition of an IAM Role?",
+      "options": [
+        "IAM Users in multiple User Groups",
+        "An IAM entity that defines a password policy for IAM Users",
+        "An IAM entity that defines a set of permissions for making requests to AWS services, and will be used by an AWS service",
+        "Permissions assigned to IAM Users to perform actions"
+      ],
+      "correctIndex": 2,
+      "explanation": "An IAM Role is an entity that defines a set of permissions for making requests to AWS. Unlike an IAM User, a role is meant to be assumed by trusted entities, such as AWS services (like EC2 or Lambda), so they can perform actions on your behalf securely without needing permanent credentials."
+    },
+    {
+      "question": "Which of the following is an IAM Security Tool?",
+      "options": [
+        "IAM Credentials Report",
+        "IAM Root Account Manager",
+        "IAM Services Report",
+        "IAM Security Advisor"
+      ],
+      "correctIndex": 0,
+      "explanation": "The IAM Credentials Report is a valid account-level security tool that lists all your account's users and the status of their various credentials (passwords, MFA, access keys). The other options are fabricated names (the actual user-level tool is called IAM Access Advisor)."
+    },
+    {
+      "question": "Which answer is INCORRECT regarding IAM Users?",
+      "options": [
+        "IAM Users can belong to multiple User Groups",
+        "IAM Users don't have to belong to a User Group",
+        "IAM Policies can be attached directly to IAM Users",
+        "IAM Users access AWS services using root account credentials"
+      ],
+      "correctIndex": 3,
+      "explanation": "The statement 'IAM Users access AWS services using root account credentials' is INCORRECT. IAM Users are created with their own distinct credentials (password or access keys). The root account is completely separate and its credentials should be locked away and not used for daily access. The other three statements are completely true."
+    },
+    {
+    "question": "Which of the following is an IAM best practice?",
+    "options": [
+      "Create several IAM Users for one physical person",
+      "Don't use the root user account",
+      "Share your AWS account credentials with your colleague, so (s)he can perform a task for you",
+      "Do not enable MFA for easier access"
+    ],
+    "correctIndex": 1,
+    "explanation": "One of the most critical AWS IAM best practices is to lock away your AWS account root user credentials and avoid using them for everyday tasks. Instead, you should create individual IAM users or leverage IAM roles for administrative and daily work."
+  },
+  {
+    "question": "What are IAM Policies?",
+    "options": [
+      "A set of policies that defines how AWS accounts interact with each other",
+      "JSON documents that define a set of permissions for making requests to AWS services, and can be used by IAM Users, User Groups, and IAM Roles",
+      "A set of policies that define a password for IAM Users",
+      "A set of policies defined by AWS that show how customers interact with AWS"
+    ],
+    "correctIndex": 1,
+    "explanation": "IAM Policies are JSON documents that explicitly specify what actions are allowed or denied on which AWS resources. These policies can be directly attached to identities such as IAM Users, User Groups, or IAM Roles to manage their permissions."
+  },
+  {
+    "question": "Which principle should you apply regarding IAM Permissions?",
+    "options": [
+      "Grant most privilege",
+      "Grant more permissions if your employee asks you to",
+      "Grant least privilege",
+      "Restrict root account permissions"
+    ],
+    "correctIndex": 2,
+    "explanation": "The principle of least privilege means granting users only the minimum permissions necessary to perform their required job functions. This helps reduce security risks, accidental damage, and unauthorized access within your AWS environment."
+  },
+  {
+    "question": "What should you do to increase your root account security?",
+    "options": [
+      "Remove permissions from the root account",
+      "Only access AWS services through AWS Command Line Interface (CLI)",
+      "Don't create IAM Users, only access your AWS account using the root account",
+      "Enable Multi-Factor Authentication (MFA)"
+    ],
+    "correctIndex": 3,
+    "explanation": "Enabling Multi-Factor Authentication (MFA) on the root account is one of the most immediate and effective security practices recommended by AWS to protect the highly privileged root user from unauthorized access."
+  },
+  {
+    "question": "IAM User Groups can contain IAM Users and other User Groups.",
+    "options": [
+      "True",
+      "False"
+    ],
+    "correctIndex": 1,
+    "explanation": "In AWS IAM, groups cannot be nested. An IAM User Group can only contain IAM Users; it cannot contain other User Groups."
+  },
+  {
+    "question": "An IAM policy consists of one or more statements. A statement in an IAM Policy consists of the following, EXCEPT:",
+    "options": [
+      "Effect",
+      "Principal",
+      "Version",
+      "Action",
+      "Resource"
+    ],
+    "correctIndex": 2,
+    "explanation": "'Version' is a top-level element of the overall IAM Policy document, not an element within an individual 'Statement' block. A standard statement block typically contains Effect, Principal, Action, Resource, and optional Conditions."
+  }
   ]
 }
