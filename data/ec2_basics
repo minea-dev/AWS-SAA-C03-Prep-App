@@ -1,0 +1,438 @@
+{
+  "title": "Amazon EC2 – Basics",
+  "study": [
+    {
+      "term": "Concept: Amazon EC2 (Elastic Compute Cloud) Overview",
+      "definition": "An Infrastructure as a Service (IaaS) offering from AWS that allows you to rent and manage virtual machines in the cloud.",
+      "explanation": "EC2 is one of the most fundamental and popular AWS services. It provides the capability to rent virtual machines (EC2), store data on virtual network drives (EBS), distribute incoming traffic across multiple machines (ELB), and scale your infrastructure automatically using Auto Scaling Groups (ASG)."
+    },
+    {
+      "term": "Concept: EC2 Sizing & Configuration Options",
+      "definition": "The hardware, software, and networking parameters configured when provisioning an EC2 instance.",
+      "explanation": "When launching EC2, you configure the Operating System (Linux, Windows, or macOS), compute power (vCPUs) and RAM, storage (network-attached EBS/EFS or local hardware Instance Store), network configuration (public/private IPs, network card speed), firewall rules (Security Groups), and bootstrap scripts (EC2 User Data)."
+    },
+    {
+      "term": "Concept: EC2 User Data (Bootstrapping)",
+      "definition": "A script that runs automatically when an EC2 instance launches to bootstrap the system with initial commands.",
+      "explanation": "EC2 User Data automates boot tasks such as installing operating system updates, installing software (e.g., Apache/Nginx), and downloading repository assets. This script runs ONLY ONCE during the initial boot of the instance and executes with full root administrator privileges."
+    },
+    {
+      "term": "Concept: EC2 Instance Naming Convention",
+      "definition": "The standardized nomenclature AWS uses to identify instance families, generations, and sizes (e.g., m5.2xlarge).",
+      "explanation": "Using 'm5.2xlarge' as an example: 'm' represents the instance class or family (General Purpose), '5' indicates the hardware generation, and '2xlarge' represents the capacity and resource size within that family."
+    },
+    {
+      "term": "Concept: EC2 Instance Families Overview",
+      "definition": "Categories of virtual hardware optimized for distinct workloads: General Purpose, Compute, Memory, Storage, Accelerated Computing, and HPC.",
+      "explanation": "AWS groups EC2 instances into specialized families: General Purpose (balanced resources), Compute Optimized (CPU-heavy), Memory Optimized (RAM-heavy), Storage Optimized (high IOPS/throughput local storage), Accelerated Computing (GPU/hardware acceleration), and High Performance Computing (HPC)."
+    },
+    {
+      "term": "Concept: EC2 Instance Types – General Purpose",
+      "definition": "Instances that provide a balanced ratio of compute, memory, and networking resources for diverse workloads.",
+      "explanation": "Ideal for applications where compute, memory, and network throughput are consumed in equal proportions, such as web servers, testing/development environments, and code repositories. Standard families include the T-series (burstable performance, e.g., t2, t3, t4g; including the free-tier eligible t2.micro) and the M-series (balanced production workloads, e.g., m5, m6g)."
+    },
+    {
+      "term": "Concept: EC2 Instance Types – Compute Optimized",
+      "definition": "Instances engineered for compute-bound applications that require high-performance processors and high CPU-to-memory ratios.",
+      "explanation": "Optimized for workloads that demand significant processing power: batch processing, video encoding and media transcoding, high-performance web servers, scientific modeling, machine learning inference, dedicated multiplayer gaming servers, and High Performance Computing (HPC). These belong to the C family (e.g., C4, C5, C5a, C6g)."
+    },
+    {
+      "term": "Concept: EC2 Instance Types – Memory Optimized",
+      "definition": "Instances built to deliver fast performance for applications processing massive datasets in memory.",
+      "explanation": "Best suited for high-performance relational and NoSQL databases, distributed web-scale in-memory cache stores (such as Redis and Memcached), in-memory databases optimized for Business Intelligence (BI), and real-time streaming analytics. Common families include the R-series (e.g., R5, R6g), X-series (e.g., X1, X1e for multi-terabyte in-memory workloads), and z1d."
+    },
+    {
+      "term": "Concept: EC2 Instance Types – Storage Optimized",
+      "definition": "Instances tailored for workloads requiring direct, sequential read and write access to very large datasets on high-speed local NVMe storage.",
+      "explanation": "Optimized to deliver tens of thousands of low-latency, random I/O operations per second (IOPS) directly on local disks. Core use cases include high-frequency Online Transaction Processing (OLTP) databases, data warehousing applications, cache for in-memory systems, and distributed big-data file systems (like Apache Kafka, Cassandra, or Hadoop HDFS). Key families include the I-series (e.g., I3, I3en for local NVMe SSDs) and D-series (dense HDD storage)."
+    },
+    {
+      "term": "Concept: EC2 Hardware Suffixes & Modifiers (e.g., c5d, m5a, t4g)",
+      "definition": "Letters appended to instance classes that describe underlying hardware features and processor architectures.",
+      "explanation": "Key suffixes: 'd' indicates directly-attached local NVMe SSD instance store disks (e.g., c5d.4xlarge includes local NVMe storage rather than relying solely on EBS); 'g' indicates AWS Graviton ARM-based processors offering superior price-performance; 'a' indicates AMD processors; and 'n' indicates enhanced high-throughput networking capabilities."
+    },
+    {
+      "term": "Concept: Security Groups Fundamentals",
+      "definition": "A virtual stateful firewall that controls inbound and outbound network traffic directly at the EC2 instance level.",
+      "explanation": "Security Groups regulate access by port range, protocol (TCP, UDP, ICMP), and authorized IPv4/IPv6 CIDR blocks or referenced Security Group IDs. A fundamental exam rule is that Security Groups contain ONLY allow rules; you cannot create an explicit deny rule."
+    },
+    {
+      "term": "Concept: Security Groups Default Behavior & Statefulness",
+      "definition": "The built-in operational rules and traffic permissions governing AWS Security Groups.",
+      "explanation": "By default, all inbound traffic is blocked, and all outbound traffic is authorized. Security groups exist outside the EC2 instance, so dropped packets never reach the OS. They are locked to a specific Region/VPC combination and can be attached to multiple EC2 instances. Crucially, Security Groups are stateful: if inbound traffic is allowed, return outbound traffic is automatically permitted regardless of outbound rules."
+    },
+    {
+      "term": "Concept: Troubleshooting EC2 Connectivity (Timeout vs. Connection Refused)",
+      "definition": "Diagnosing whether connection failures are caused by network firewall rules or operating system/application issues.",
+      "explanation": "If a connection request hangs and produces a 'Request Timeout', it is almost always caused by a Security Group or network firewall dropping packets silently. If a connection fails immediately with a 'Connection Refused' error, traffic passed through the Security Group successfully, but the application inside the OS is not running or not listening on that port."
+    },
+    {
+      "term": "Concept: Referencing Other Security Groups (Chaining)",
+      "definition": "Specifying a Security Group ID instead of a CIDR IP block as the source or destination in firewall rules.",
+      "explanation": "Allows instances associated with one Security Group to communicate directly with instances carrying another Security Group without hardcoding dynamic private IP addresses. This is a critical pattern for multi-tier architectures (e.g., configuring database instances to only accept port 3306/5432 inbound traffic from instances carrying the Backend Security Group)."
+    },
+    {
+      "term": "Concept: Standard Network Ports for AWS Solutions",
+      "definition": "The essential, well-known port numbers frequently tested on the AWS SAA-C03 exam.",
+      "explanation": "Port 22: SSH (Secure Shell for Linux login) and SFTP (Secure File Transfer Protocol); Port 21: FTP (unsecured file transfer); Port 80: HTTP (unencrypted web traffic); Port 443: HTTPS (encrypted web traffic over TLS/SSL); Port 3389: RDP (Remote Desktop Protocol for Windows instance login)."
+    },
+    {
+      "term": "Concept: EC2 Remote Connection (SSH & PuTTY)",
+      "definition": "Traditional command-line methods used to remotely access and administer Linux EC2 instances.",
+      "explanation": "Direct terminal SSH commands work natively on Linux, macOS, and modern Windows 10/11 using a private key (.pem file) with restricted permissions (chmod 400). Older Windows systems rely on PuTTY, which requires converting the .pem private key into .ppk format using PuTTYgen before connecting."
+    },
+    {
+      "term": "Concept: EC2 Instance Connect",
+      "definition": "A secure, browser-based mechanism to access Linux EC2 instances via SSH directly from the AWS Console without managing local key files.",
+      "explanation": "EC2 Instance Connect eliminates the need to download or store permanent private keys. When initiated, AWS pushes a temporary public SSH key (valid for 60 seconds) directly to instance metadata. It works out-of-the-box on Amazon Linux 2, but inbound port 22 must still remain open in the instance's Security Group."
+    },
+    {
+      "term": "Concept: EC2 On-Demand Instances",
+      "definition": "A pay-as-you-go compute option with no long-term commitment and zero upfront payment.",
+      "explanation": "Users pay only for compute capacity consumed. Linux and Windows instances are billed per second (after the first minute), while other operating systems are billed hourly. Although it carries the highest hourly cost, On-Demand is recommended for short-term, uninterrupted workloads where application behavior and traffic patterns cannot be predicted in advance."
+    },
+    {
+      "term": "Concept: EC2 Reserved Instances (Standard vs. Convertible)",
+      "definition": "Discounted purchasing models requiring a 1-year or 3-year commitment for predictable, steady-state workloads.",
+      "explanation": "Standard Reserved Instances (RIs) offer up to a 72% discount when committing to specific attributes (instance type, region, OS, and tenancy). Convertible RIs provide up to a 66% discount while granting the flexibility to change instance families, operating systems, and tenancies over time. Scope can be Regional (floating discount across all AZs) or Zonal (reserves physical capacity in a specified AZ). Standard RIs can also be traded on the AWS Reserved Instance Marketplace."
+    },
+    {
+      "term": "Concept: EC2 Savings Plans",
+      "definition": "A commitment-based pricing model requiring a commitment to a specific dollar amount of compute usage per hour (e.g., $10/hour) for 1 or 3 years.",
+      "explanation": "Offers discounts of up to 72% (comparable to Standard RIs) while simplifying cost management. EC2 Instance Savings Plans lock in an instance family within a specific AWS Region (e.g., M5 in us-east-1), but remain completely flexible across instance sizes (e.g., m5.large to m5.2xlarge), operating systems (Linux, Windows), and hardware tenancies. Usage beyond the committed spend is billed at standard On-Demand rates."
+    },
+    {
+      "term": "Concept: EC2 Spot Instances",
+      "definition": "The most cost-efficient EC2 purchasing option, offering up to a 90% discount by utilizing spare AWS compute capacity.",
+      "explanation": "Instances can be reclaimed (interrupted/terminated) by AWS at any moment with a 2-minute warning whenever AWS needs the capacity back or the spot market price exceeds your maximum defined bid price. Designed strictly for failure-resilient workloads: batch jobs, big data processing, distributed rendering, and tasks with flexible start/end times. Spot instances must never be used for critical applications, databases, or non-fault-tolerant production systems."
+    },
+    {
+      "term": "Concept: Dedicated Instances vs. Dedicated Hosts (Single-Tenant Hardware)",
+      "definition": "Hardware isolation options ensuring your instances do not share physical servers with any other AWS customers.",
+      "explanation": "Dedicated Instances are billed per instance; AWS manages instance placement, meaning an instance can move to different physical hardware after a stop/start sequence. Dedicated Hosts book an entire physical server, are billed per host, and grant full visibility into sockets, physical cores, and host IDs. Dedicated Hosts are essential for strict compliance or Bring Your Own License (BYOL) software requiring core- or socket-bound licenses."
+    },
+    {
+      "term": "Concept: EC2 On-Demand Capacity Reservations",
+      "definition": "A capability to reserve compute capacity in a specific Availability Zone for any duration without requiring a long-term commitment.",
+      "explanation": "Guarantees access to EC2 compute capacity in a designated AZ whenever needed. There are no billing discounts associated with Capacity Reservations alone—you are charged the standard On-Demand rate whether you launch instances into the reservation or leave it idle. To lower costs, you can combine Capacity Reservations with Regional Reserved Instances or Savings Plans."
+    },
+    {
+      "term": "Concept: EC2 Spot Instance Requests & Grace Period",
+      "definition": "A mechanism to request spare EC2 compute capacity by defining a maximum price you are willing to pay per hour.",
+      "explanation": "Instances run as long as the current Spot market price remains at or below your defined maximum price. If the market price exceeds your bid or capacity is reclaimed, AWS issues a 2-minute warning (grace period) before terminating or stopping the instance. Requests can be 'one-time' (closes after launch) or 'persistent' (automatically attempts to re-provision an instance if interrupted)."
+    },
+    {
+      "term": "Concept: How to Terminate Spot Instances (Two-Step Process)",
+      "definition": "Canceling an active Spot Request does NOT terminate running Spot instances; you must explicitly cancel the request first and then terminate the instances.",
+      "explanation": "If you have a persistent Spot Request and terminate only the running EC2 instance, the open request will immediately provision a replacement Spot instance. To shut down the workload cleanly and avoid unexpected charges, first cancel the Spot Request (which must be open, active, or disabled) and then manually terminate the associated running instances."
+    },
+    {
+      "term": "Concept: Spot Fleets & Allocation Strategies",
+      "definition": "A managed collection of Spot Instances (and optionally On-Demand Instances) that automatically fulfills a target compute capacity using multiple launch pools.",
+      "explanation": "A Spot Fleet selects from multiple defined launch pools based on your strategy: 1) 'priceCapacityOptimized' (Recommended): selects pools with the highest capacity available first, then chooses the lowest price among them; 2) 'lowestPrice': launches from the lowest-priced pool (best for short, failure-resilient jobs); 3) 'diversified': distributes instances evenly across all pools (maximizes availability); 4) 'capacityOptimized': selects pools with optimal capacity for the requested volume."
+    }
+  ],
+  "test": [
+    {
+      "question": "A developer needs to deploy an Apache web server on a newly launched EC2 instance automatically without manual SSH intervention. Which EC2 feature allows the developer to pass a script that installs Apache during the initial boot process?",
+      "options": [
+        "AWS Systems Manager Run Command",
+        "EC2 User Data",
+        "IAM Instance Profile",
+        "AWS Lambda"
+      ],
+      "correctIndex": 1,
+      "explanation": "EC2 User Data is specifically designed to automate boot tasks such as installing software, downloading files, or running OS updates. It executes automatically with root privileges exactly once during the instance's first boot cycle."
+    },
+    {
+      "question": "A data engineering team is running a distributed, high-performance in-memory cache using Redis. Which EC2 instance family is optimally designed for workloads that process massive datasets directly in RAM?",
+      "options": [
+        "Compute Optimized (C-series)",
+        "Memory Optimized (R-series, X-series)",
+        "General Purpose (T-series)",
+        "Storage Optimized (I-series)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Memory Optimized instances (like the R, X, and z1d families) are specifically built to deliver fast performance for workloads that process massive datasets in memory, such as Redis, Memcached, and high-performance databases."
+    },
+    {
+      "question": "A Solutions Architect is designing a multi-tier web application. The web tier EC2 instances reside in a public subnet, and the Amazon RDS database resides in a private subnet. What is the MOST secure way to configure the database Security Group to allow traffic ONLY from the web tier?",
+      "options": [
+        "Create an inbound rule on the database Security Group allowing traffic from the private IP addresses of the web instances.",
+        "Create an inbound rule on the database Security Group referencing the Security Group ID of the web tier instances.",
+        "Use a Network ACL to deny all IP addresses except the Elastic IPs of the web tier.",
+        "Create an outbound rule on the web tier Security Group allowing traffic to the RDS endpoint."
+      ],
+      "correctIndex": 1,
+      "explanation": "Referencing other Security Groups (Security Group Chaining) is an AWS best practice. Instead of hardcoding dynamic private IPs, you reference the Web Tier Security Group ID as the source in the Database Security Group's inbound rules. This ensures only instances with the Web Tier SG can communicate with the database."
+    },
+    {
+      "question": "A newly launched EC2 instance is hosting a web application on port 80. A user attempts to connect via their web browser, but the browser spins for a long time and eventually returns a 'Request Timeout' error. What is the most likely cause of this issue?",
+      "options": [
+        "The web server service (like Apache or Nginx) inside the EC2 instance is stopped or crashed.",
+        "The EC2 instance is using a public IP instead of an Elastic IP.",
+        "The Security Group attached to the EC2 instance does not have an inbound rule allowing HTTP traffic on port 80.",
+        "The VPC is configured with a NAT Gateway instead of an Internet Gateway."
+      ],
+      "correctIndex": 2,
+      "explanation": "A 'Request Timeout' means packets are being silently dropped before reaching the operating system, which is the classic signature of a Security Group (or network firewall) blocking the traffic. If the traffic passed the Security Group but the application was stopped, it would return a 'Connection Refused' error immediately."
+    },
+    {
+      "question": "A systems administrator needs to restrict access to an EC2 instance. They want to explicitly DENY traffic from a specific malicious IP address block. How can they achieve this using EC2 Security Groups?",
+      "options": [
+        "Add an inbound rule to the Security Group setting the malicious IP block and selecting the 'Deny' action.",
+        "Security Groups do not support explicit deny rules. The administrator must use a Network ACL (NACL) instead.",
+        "Remove the 'Allow All' rule and manually whitelist all other internet IPs.",
+        "Set the default Security Group policy to Deny, and add the malicious IP block to the explicit list."
+      ],
+      "correctIndex": 1,
+      "explanation": "A fundamental rule of AWS Security Groups is that they only support ALLOW rules; you cannot create an explicit DENY rule. To explicitly deny a specific IP address, you must use Network Access Control Lists (NACLs) at the subnet level."
+    },
+    {
+      "question": "A developer needs quick SSH access to an Amazon Linux 2 EC2 instance from within the AWS Management Console, but they have lost the original `.pem` private key file. Which feature allows them to securely connect via the browser without the permanent key?",
+      "options": [
+        "PuTTYgen",
+        "EC2 Instance Connect",
+        "AWS Systems Manager Parameter Store",
+        "Amazon Macie"
+      ],
+      "correctIndex": 1,
+      "explanation": "EC2 Instance Connect provides a secure, browser-based CLI directly from the AWS Console by pushing a temporary, 60-second SSH key directly to the instance metadata. This removes the need for managing static `.pem` files."
+    },
+    {
+      "question": "A startup is launching a new application and cannot predict its traffic patterns. They plan to run the application continuously for the next three months before analyzing usage. Which EC2 purchasing option is the most appropriate and cost-effective?",
+      "options": [
+        "EC2 Spot Instances",
+        "EC2 On-Demand Instances",
+        "EC2 Standard Reserved Instances (1-year term)",
+        "EC2 Dedicated Hosts"
+      ],
+      "correctIndex": 1,
+      "explanation": "On-Demand instances are recommended for short-term, uninterrupted workloads where application behavior is unpredictable. Since the timeline is only three months and the workload must run continuously, Reserved Instances (which require a 1-year minimum) and Spot Instances (which can be interrupted) are not suitable."
+    },
+    {
+      "question": "A company is migrating its entire backend to AWS and is willing to commit to a consistent $50/hour compute spend for the next 3 years. They want the maximum discount but require the flexibility to switch between Linux and Windows OS, and move between M5 and C5 instance families. Which purchasing option should they choose?",
+      "options": [
+        "Convertible Reserved Instances",
+        "Standard Reserved Instances",
+        "EC2 Instance Savings Plans",
+        "Compute Savings Plans"
+      ],
+      "correctIndex": 3,
+      "explanation": "While EC2 Instance Savings Plans lock you into a specific instance family, Compute Savings Plans offer the greatest flexibility (across instance families, sizes, OS, tenancies, and even compute services like Lambda and Fargate) in exchange for a committed $/hour spend. (Note: EC2 Savings Plans in general provide this $/hour flexibility across OS/sizes)."
+    },
+    {
+      "question": "A research firm processes massive amounts of satellite imagery in distributed batch jobs. If an individual EC2 instance fails or stops, the central job manager simply re-assigns the task to another instance without losing overall progress. Which EC2 purchasing option will yield the LOWEST cost for this workload?",
+      "options": [
+        "Dedicated Instances",
+        "On-Demand Instances",
+        "Reserved Instances",
+        "Spot Instances"
+      ],
+      "correctIndex": 3,
+      "explanation": "Spot Instances are the most cost-efficient EC2 purchasing option (up to 90% discount). Because the firm's workload consists of distributed batch jobs that are highly resilient to individual instance failure and interruptions, Spot Instances are the perfect fit."
+    },
+    {
+      "question": "A financial institution is migrating a legacy database to AWS. The software vendor's licensing terms strictly dictate that licenses are tied to physical server sockets, and the institution must prove exclusive use of the underlying physical hardware. Which EC2 deployment option must they use?",
+      "options": [
+        "EC2 Dedicated Instances",
+        "EC2 Dedicated Hosts",
+        "EC2 Bare Metal Instances",
+        "EC2 Capacity Reservations"
+      ],
+      "correctIndex": 1,
+      "explanation": "EC2 Dedicated Hosts allow you to book an entire physical server, providing full visibility into hardware sockets, physical cores, and host IDs. This is explicitly required for compliance with strict Bring Your Own License (BYOL) terms that are bound to sockets or cores."
+    },
+    {
+      "question": "A developer configured a persistent Spot Request that launched a Spot Instance. They no longer need the compute capacity and manually terminated the Spot Instance via the EC2 console. A few minutes later, they notice a new Spot Instance has launched automatically. What is the correct way to permanently shut down the workload?",
+      "options": [
+        "Delete the IAM Role attached to the instance.",
+        "First terminate the instance, then immediately modify the Spot Request maximum price to zero.",
+        "First cancel the active Spot Request, then manually terminate the running Spot Instances.",
+        "Stop the instance instead of terminating it."
+      ],
+      "correctIndex": 2,
+      "explanation": "Canceling a Spot Request does not automatically terminate the running instances, and terminating a running instance attached to a 'persistent' Spot Request simply causes the request to provision a new instance. The correct two-step process is to cancel the Spot Request first, and then terminate the running instances."
+    },
+    {
+      "question": "A company is using a Spot Fleet to run large-scale background data processing. The primary concern is maintaining continuous application uptime across multiple Availability Zones, rather than just getting the absolute cheapest price. Which Spot Fleet allocation strategy should they use?",
+      "options": [
+        "lowestPrice",
+        "capacityOptimized",
+        "priceCapacityOptimized",
+        "diversified"
+      ],
+      "correctIndex": 3,
+      "explanation": "The 'diversified' strategy distributes instances evenly across all configured launch pools (and Availability Zones). By diversifying the deployment, the application is much less vulnerable to a single Spot capacity pool being reclaimed, maximizing overall availability for long-running batch jobs."
+    },
+    {
+      "question": "A Solutions Architect notices an EC2 instance named `c5d.2xlarge`. Based on AWS EC2 naming conventions, what does the 'd' in the instance name signify?",
+      "options": [
+        "The instance uses an AMD processor.",
+        "The instance has enhanced high-throughput networking enabled.",
+        "The instance includes directly-attached local NVMe SSD instance store disks.",
+        "The instance is running in a Dedicated Host tenancy."
+      ],
+      "correctIndex": 2,
+      "explanation": "In EC2 instance naming, the 'd' suffix indicates that the instance type includes directly-attached local NVMe SSD instance store disks, providing ultra-fast, high IOPS local storage (which is ephemeral) as opposed to relying purely on network-attached EBS volumes."
+    },
+    {
+      "question": "An IT administrator needs to securely manage a fleet of Windows Server EC2 instances using a graphical user interface. Which port must be opened in the Security Groups to allow this specific administrative connection?",
+      "options": [
+        "Port 22",
+        "Port 80",
+        "Port 443",
+        "Port 3389"
+      ],
+      "correctIndex": 3,
+      "explanation": "Port 3389 is the default port for Remote Desktop Protocol (RDP), which is used to securely connect to the graphical user interface of Windows instances. Port 22 is for SSH (Linux), Port 80 is HTTP, and Port 443 is HTTPS."
+    },
+    {
+      "question": "A retail company expects massive traffic spikes for an upcoming flash sale event running from 8 AM to 10 AM on a specific Friday. They must guarantee that exact compute capacity is available in `us-east-1a` during this window, but they do not want to commit to a 1-year contract. Which feature should they use?",
+      "options": [
+        "EC2 On-Demand Capacity Reservations",
+        "Zonal Reserved Instances (Standard)",
+        "EC2 Spot Fleets",
+        "AWS Auto Scaling Scheduled Actions"
+      ],
+      "correctIndex": 0,
+      "explanation": "EC2 On-Demand Capacity Reservations allow you to reserve specific compute capacity in a specific AZ for any duration without requiring a long-term (1-year or 3-year) commitment. They guarantee the capacity will be there exactly when you need it for the flash sale."
+    },
+    {
+      "question": "What is the default stateful behavior of an AWS EC2 Security Group when a new inbound rule is created allowing HTTP traffic on port 80?",
+      "options": [
+        "The administrator must manually create an outbound rule on port 80 to allow the server to reply to clients.",
+        "The Security Group automatically allows the return outbound traffic for that connection, regardless of the outbound rules.",
+        "The return traffic is allowed only if the default 'Allow All' outbound rule has not been deleted.",
+        "The Security Group will allow the traffic, but the Network ACL must also be configured to be stateful."
+      ],
+      "correctIndex": 1,
+      "explanation": "Security Groups are stateful. This means if you allow an incoming request (e.g., inbound HTTP on port 80), the return traffic for that specific request is automatically allowed outbound, regardless of what the outbound rules are configured to do."
+    },
+	{
+    "question": "Which EC2 Purchasing Option can provide you the biggest discount, but it is not suitable for critical jobs or databases?",
+    "options": [
+      "Convertible Reserved Instances",
+      "Dedicated Hosts",
+      "Spot Instances"
+    ],
+    "correctIndex": 2,
+    "explanation": "Spot Instances offer the highest discount (up to 90%), but AWS can interrupt them and reclaim the capacity with a 2-minute warning. Because of this, they are ideal for fault-tolerant workloads (like batch processing) but are completely unsuitable for critical jobs or databases."
+  },
+  {
+    "question": "What should you use to control traffic in and out of EC2 instances?",
+    "options": [
+      "Network Access Control List (NACL)",
+      "Security Groups",
+      "IAM Policies"
+    ],
+    "correctIndex": 1,
+    "explanation": "Security Groups act as a virtual firewall directly at the EC2 instance level to control inbound and outbound traffic. Network ACLs, on the other hand, operate at the subnet level."
+  },
+  {
+    "question": "How long can you reserve an EC2 Reserved Instance?",
+    "options": [
+      "1 or 3 years",
+      "2 or 4 years",
+      "6 months or 1 year",
+      "Anytime between 1 and 3 years"
+    ],
+    "correctIndex": 0,
+    "explanation": "EC2 Reserved Instances are based on strict long-term commitment pricing models, which are exclusively offered in fixed terms of either 1 year or 3 years."
+  },
+  {
+    "question": "You would like to deploy a High-Performance Computing (HPC) application on EC2 instances. Which EC2 instance type should you choose?",
+    "options": [
+      "Storage Optimized",
+      "Compute Optimized",
+      "Memory Optimized",
+      "General Purpose"
+    ],
+    "correctIndex": 1,
+    "explanation": "Compute Optimized instances are specifically designed for applications that require high-performance processors and a high CPU-to-memory ratio, making them ideal for scientific modeling, machine learning, and High-Performance Computing (HPC)."
+  },
+  {
+    "question": "Which EC2 Purchasing Option should you use for an application you plan to run on a server continuously for 1 year?",
+    "options": [
+      "Reserved Instances",
+      "Spot Instances",
+      "On-Demand Instances"
+    ],
+    "correctIndex": 0,
+    "explanation": "Reserved Instances provide a significant discount compared to On-Demand pricing and are designed for continuous, steady-state, and predictable workloads when you commit to a 1-year or 3-year term. On-Demand instances would be unnecessarily expensive for a full continuous year, and Spot Instances could be interrupted at any moment."
+  },
+  {
+    "question": "You are preparing to launch an application that will be hosted on a set of EC2 instances. This application needs some software installation and some OS packages need to be updated during the first launch. What is the best way to achieve this when you launch the EC2 instances?",
+    "options": [
+      "Connect to each EC2 instance using SSH, then install the required software and update your OS packages manually",
+      "Write a bash script that installs the required software and updates to your OS, then contact AWS Support and provide them with the script. They will run it on your EC2 instances at launch",
+      "Write a bash script that installs the required software and updates to your OS, then use this script in EC2 User Data when you launch your EC2 instances"
+    ],
+    "correctIndex": 2,
+    "explanation": "The 'EC2 User Data' feature is designed exactly to automate boot tasks such as installing software or applying OS updates. The script automatically executes with root administrator privileges only during the instance's first boot cycle. Doing this manually is not scalable, and AWS Support does not manage the internal configuration of your instances."
+  },
+  {
+    "question": "Which EC2 Instance Type should you choose for a critical application that uses an in-memory database?",
+    "options": [
+      "Compute Optimized",
+      "Storage Optimized",
+      "Memory Optimized",
+      "General Purpose"
+    ],
+    "correctIndex": 2,
+    "explanation": "Memory Optimized instances are built to deliver fast performance for workloads that process large data sets in memory, making them the best fit for high-performance databases, distributed web-scale in-memory cache stores, and BI in-memory databases[cite: 554]."
+  },
+  {
+    "question": "You have an e-commerce application with an OLTP database hosted on-premises. This application has popularity which results in its database has thousands of requests per second. You want to migrate the database to an EC2 instance. Which EC2 Instance Type should you choose to handle this high-frequency OLTP database?",
+    "options": [
+      "Compute Optimized",
+      "Storage Optimized",
+      "Memory Optimized",
+      "General Purpose"
+    ],
+    "correctIndex": 1,
+    "explanation": "Storage Optimized instances are designed for workloads that require high, sequential read and write access to very large data sets on local storage, perfectly matching the requirements of a high-frequency OLTP database[cite: 555]."
+  },
+  {
+    "question": "Security Groups can be attached to only one EC2 instance.",
+    "options": [
+      "False",
+      "True"
+    ],
+    "correctIndex": 0,
+    "explanation": "Security Groups can be attached to multiple EC2 instances, allowing you to reuse the same firewall rules across multiple resources[cite: 556]."
+  },
+  {
+    "question": "You're planning to migrate on-premises applications to AWS. Your company has strict compliance requirements that require your applications to run on dedicated servers. You also need to use your own server-bound software license to reduce costs. Which EC2 Purchasing Option is suitable for you?",
+    "options": [
+      "Convertible Reserved Instances",
+      "Dedicated Hosts",
+      "Spot Instances"
+    ],
+    "correctIndex": 1,
+    "explanation": "Dedicated Hosts are physical servers with EC2 instance capacity fully dedicated to your use. They allow you to address compliance requirements and use existing server-bound software licenses (BYOL), making them the correct choice for this scenario[cite: 557]."
+  },
+  {
+    "question": "You would like to deploy a database technology on an EC2 instance and the vendor license bills you based on the physical cores and underlying network socket visibility. Which EC2 Purchasing Option allows you to get visibility into them?",
+    "options": [
+      "Spot Instances",
+      "On-Demand",
+      "Dedicated Hosts",
+      "Reserved Instances"
+    ],
+    "correctIndex": 2,
+    "explanation": "Dedicated Hosts provide visibility into the number of sockets and physical cores, which is necessary for software licenses that are bound to these hardware specifications[cite: 558]."
+  },
+  {
+    "question": "Spot Fleet is a set of Spot Instances and optionally ....................",
+    "options": [
+      "Reserved Instances",
+      "On-Demand Instances",
+      "Dedicated Hosts",
+      "Dedicated Instances"
+    ],
+    "correctIndex": 1,
+    "explanation": "A Spot Fleet is a collection, or fleet, of Spot Instances, and optionally On-Demand Instances, that automatically fulfills a target capacity based on your defined price and availability constraints[cite: 559]."
+  }
+  ]
+}
