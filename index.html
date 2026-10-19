@@ -40,7 +40,7 @@
             </div>
         </div>
 
-        <!-- STUDY MENU (Select one topic) -->
+        <!-- STUDY MENU -->
         <div id="view-study-menu" class="hidden">
             <button onclick="showMenu()" class="text-indigo-600 mb-4 font-bold">&larr; Back</button>
             <h2 class="text-xl font-bold mb-4">Select a Topic to Study</h2>
@@ -81,13 +81,18 @@
         <!-- TEST CONFIGURATION -->
         <div id="view-test-config" class="hidden">
             <button onclick="showMenu()" class="text-indigo-600 mb-4 font-bold">&larr; Back</button>
-            <h2 class="text-xl font-bold mb-4">Configure Mock Exam</h2>
-            <p class="text-sm text-gray-600 mb-4">Select the topics you want to include in this practice test.</p>
-            <div id="test-topics-list" class="space-y-2 mb-6 bg-white p-4 rounded-xl shadow">
+            <h2 class="text-xl font-bold mb-2">Configure Mock Exam</h2>
+            <p class="text-sm text-gray-600 mb-4">Select at least 2 topics and a minimum of 65 questions to activate the Mock Exam.</p>
+            
+            <div id="test-topics-list" class="space-y-2 mb-4 bg-white p-4 rounded-xl shadow">
                 <!-- Injected via JS -->
             </div>
-            <button onclick="startTest()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow">
-                Start Exam
+            
+            <!-- Real-time status text -->
+            <p id="exam-status-text" class="text-sm font-bold text-red-500 mb-4 text-center"></p>
+
+            <button id="btn-start-exam" disabled onclick="startTest()" class="w-full bg-gray-400 text-white font-bold py-3 rounded-lg shadow cursor-not-allowed transition-colors">
+                Start Exam (65 Questions)
             </button>
         </div>
 
@@ -118,6 +123,7 @@
     <script>
         // --- GLOBAL STATE ---
         let topicsCatalog = [];
+        let topicDataCache = {}; // Cache for JSON data so we don't fetch repeatedly
         let currentStudyCards = [];
         let studyIndex = 0;
         
@@ -128,11 +134,10 @@
         // --- 1. BOOTSTRAP (Fetch Catalog) ---
         window.onload = async () => {
             try {
-                // Fetch the master index
                 const response = await fetch('temas.json');
                 topicsCatalog = await response.json();
             } catch (error) {
-                alert("Error loading temas.json. Are you running this on a web server (Netlify/Vercel)? Fetch doesn't work on local file://");
+                alert("Error loading temas.json. Are you running this on a web server?");
             }
         };
 
@@ -182,11 +187,9 @@
         }
 
         function renderStudyCard() {
-            // Remove flip state
             const cardElement = document.querySelector('.card');
             cardElement.classList.remove('flipped');
             
-            // Timeout to allow flip animation to reset before changing text
             setTimeout(() => {
                 const card = currentStudyCards[studyIndex];
                 document.getElementById('study-term').innerText = card.term;
@@ -204,43 +207,118 @@
         }
 
         // --- EXAM MODE ---
-        function loadTestMenu() {
+        async function loadTestMenu() {
             hideAllViews();
             const list = document.getElementById('test-topics-list');
-            list.innerHTML = '';
+            list.innerHTML = 'Loading topics...';
             
+            // Pre-fetch all active topic data to know question counts immediately
+            for (let topic of topicsCatalog) {
+                if (topic.active && !topicDataCache[topic.file]) {
+                    try {
+                        const res = await fetch(topic.file);
+                        topicDataCache[topic.file] = await res.json();
+                    } catch (e) {
+                        console.error(`Failed to load ${topic.file}`);
+                    }
+                }
+            }
+
+            list.innerHTML = '';
             topicsCatalog.forEach((topic, i) => {
-                if(!topic.active) return;
+                if(!topic.active || !topicDataCache[topic.file]) return;
+                
+                const testQuestionsCount = topicDataCache[topic.file].test?.length || 0;
                 
                 const label = document.createElement('label');
-                label.className = "flex items-center space-x-3 p-3 border-b border-gray-100 last:border-0 cursor-pointer";
+                label.className = "flex items-center space-x-3 p-3 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50";
                 label.innerHTML = `
-                    <input type="checkbox" id="chk-${i}" class="w-5 h-5 text-green-600 rounded focus:ring-green-500" value="${topic.file}">
-                    <span class="font-medium text-gray-700">${topic.title}</span>
+                    <input type="checkbox" onchange="updateExamStatus()" class="test-topic-chk w-5 h-5 text-green-600 rounded focus:ring-green-500" value="${topic.file}">
+                    <span class="font-medium text-gray-700">${topic.title} <span class="text-xs text-gray-400 ml-2">(${testQuestionsCount} questions)</span></span>
                 `;
                 list.appendChild(label);
             });
+            
+            updateExamStatus();
             document.getElementById('view-test-config').classList.remove('hidden');
         }
 
-        async function startTest() {
-            const checkboxes = document.querySelectorAll('#test-topics-list input[type="checkbox"]:checked');
-            if(checkboxes.length === 0) return alert("Select at least one topic!");
-
-            let allQuestions = [];
+        function updateExamStatus() {
+            const checkboxes = document.querySelectorAll('.test-topic-chk:checked');
+            const btn = document.getElementById('btn-start-exam');
+            const statusText = document.getElementById('exam-status-text');
             
-            // Fetch selected JSONs
-            for (let chk of checkboxes) {
-                const res = await fetch(chk.value);
-                const data = await res.json();
-                
-                // Add topic title to each question for context
-                const questionsWithTopic = data.test.map(q => ({...q, _topicTitle: data.title}));
-                allQuestions = allQuestions.concat(questionsWithTopic);
+            let totalQuestions = 0;
+            let topicsSelectedCount = checkboxes.length;
+
+            checkboxes.forEach(chk => {
+                const data = topicDataCache[chk.value];
+                if (data && data.test) {
+                    totalQuestions += data.test.length;
+                }
+            });
+
+            // Logic required: >= 2 topics AND >= 65 questions
+            if (topicsSelectedCount < 2) {
+                statusText.innerText = "⚠️ Please select at least 2 topics.";
+                statusText.className = "text-sm font-bold text-red-500 mb-4 text-center";
+                disableExamBtn(btn);
+            } else if (totalQuestions < 65) {
+                statusText.innerText = `⚠️ You selected ${topicsSelectedCount} topics, but they only contain ${totalQuestions} questions. You need at least 65.`;
+                statusText.className = "text-sm font-bold text-red-500 mb-4 text-center";
+                disableExamBtn(btn);
+            } else {
+                statusText.innerText = `✅ Ready! Selected ${topicsSelectedCount} topics with a pool of ${totalQuestions} questions.`;
+                statusText.className = "text-sm font-bold text-green-600 mb-4 text-center";
+                enableExamBtn(btn);
+            }
+        }
+
+        function disableExamBtn(btn) {
+            btn.disabled = true;
+            btn.classList.remove('bg-green-600', 'hover:bg-green-700', 'cursor-pointer');
+            btn.classList.add('bg-gray-400', 'cursor-not-allowed');
+        }
+
+        function enableExamBtn(btn) {
+            btn.disabled = false;
+            btn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-pointer');
+        }
+
+        function startTest() {
+            const checkboxes = document.querySelectorAll('.test-topic-chk:checked');
+            let finalQuestions = [];
+            let remainingPool = [];
+            
+            // 1. Extract 1 random question from each selected topic to guarantee representation
+            checkboxes.forEach(chk => {
+                const data = topicDataCache[chk.value];
+                if (data && data.test) {
+                    const questionsWithContext = data.test.map(q => ({...q, _topicTitle: data.title}));
+                    // Shuffle the topic's questions
+                    const shuffledTopicQuestions = questionsWithContext.sort(() => Math.random() - 0.5);
+                    
+                    // Add the first one to our final exam to guarantee representation
+                    finalQuestions.push(shuffledTopicQuestions[0]);
+                    
+                    // Add all the remaining ones to the common pool
+                    remainingPool = remainingPool.concat(shuffledTopicQuestions.slice(1));
+                }
+            });
+
+            // 2. Mix the remaining pool
+            remainingPool.sort(() => Math.random() - 0.5);
+
+            // 3. Fill the rest up to exactly 65 questions
+            const neededQuestions = 65 - finalQuestions.length;
+            if (neededQuestions > 0) {
+                finalQuestions = finalQuestions.concat(remainingPool.slice(0, neededQuestions));
             }
 
-            // Shuffle questions
-            currentExamQuestions = allQuestions.sort(() => Math.random() - 0.5);
+            // 4. Final shuffle so the guaranteed questions aren't always at the beginning
+            currentExamQuestions = finalQuestions.sort(() => Math.random() - 0.5);
+            
             examIndex = 0;
             examScore = 0;
 
@@ -251,7 +329,7 @@
 
         function renderExamQuestion() {
             if(examIndex >= currentExamQuestions.length) {
-                alert(`Exam Finished! You completed ${examIndex} questions.`);
+                alert(`Exam Finished! You answered ${examScore} correctly out of ${currentExamQuestions.length}.`);
                 showMenu();
                 return;
             }
@@ -280,7 +358,7 @@
             
             // Disable all buttons and show correct answer
             for (let i = 0; i < buttons.length; i++) {
-                buttons[i].onclick = null; // disable
+                buttons[i].onclick = null; 
                 buttons[i].classList.remove('hover:border-indigo-400');
                 
                 if (i === correctIndex) {
