@@ -1,0 +1,611 @@
+{
+  "title": "High Availability & Scalability",
+  "study": [
+    {
+      "term": "Concept: Scalability vs. High Availability",
+      "definition": "Scalability is the ability of a system to handle greater loads by adapting, while High Availability (HA) is the ability to survive component or data center failures.",
+      "explanation": "Though often linked, they solve distinct problems. Scalability ensures your application doesn't crash when user traffic spikes. High Availability ensures your application stays online even if an entire Availability Zone (data center) goes down. You can have a scalable system that isn't highly available, and vice versa."
+    },
+    {
+      "term": "Concept: Vertical Scalability (Scale Up / Scale Down)",
+      "definition": "Increasing or decreasing the size and computing power of a single instance.",
+      "explanation": "If your application runs on a `t2.micro`, vertically scaling means stopping it and changing the instance type to a `t2.large` to get more CPU and RAM. This is common for non-distributed systems like relational databases (RDS, ElastiCache). The main drawback is that it has a strict 'hardware limit'—you can only scale up to the largest physical server AWS offers."
+    },
+    {
+      "term": "Concept: Horizontal Scalability (Scale Out / Scale In)",
+      "definition": "Increasing or decreasing the number of instances or systems running your application to distribute the load.",
+      "explanation": "Also known as Elasticity. Instead of making one server bigger, you add more servers. This implies a distributed system architecture and is the standard best practice for modern web applications. Cloud services like Auto Scaling Groups (ASG) and Amazon EC2 make horizontal scaling simple and automated."
+    },
+    {
+      "term": "Concept: High Availability (HA) in AWS",
+      "definition": "Running an application or system concurrently across at least two Availability Zones (AZs) to survive a data center loss.",
+      "explanation": "HA can be 'Passive' (like RDS Multi-AZ, where a standby database sits idle and only takes over if the primary fails) or 'Active' (like horizontal scaling across multiple AZs where all instances actively serve user traffic). The primary goal is fault tolerance at the data center level."
+    },
+    {
+      "term": "Concept: Load Balancing Fundamentals",
+      "definition": "A mechanism used to distribute incoming network traffic across multiple downstream backend instances or servers.",
+      "explanation": "A Load Balancer provides a single point of access (a unified DNS name) for users, hiding the complexity of the backend instances. It seamlessly handles downstream server failures, separates public traffic from private instances, enforces session stickiness (using cookies), and offloads the heavy lifting of HTTPS encryption (SSL Termination)."
+    },
+    {
+      "term": "Concept: AWS Elastic Load Balancer (ELB)",
+      "definition": "A fully managed load balancing service provided by AWS that automatically handles its own upgrades, maintenance, and high availability.",
+      "explanation": "Instead of setting up and managing your own software load balancer (like Nginx or HAProxy) on an EC2 instance, you use ELB. AWS guarantees its availability and provides seamless out-of-the-box integration with other AWS services like EC2 Auto Scaling Groups, Amazon Certificate Manager (ACM) for SSL certificates, Route 53, and CloudWatch."
+    },
+    {
+      "term": "Concept: ELB Health Checks",
+      "definition": "Automated diagnostic requests sent by the Load Balancer to backend instances to verify if they are available to receive user traffic.",
+      "explanation": "Health checks are crucial for fault tolerance. You configure a specific Protocol, Port, and Endpoint (e.g., HTTP, Port 80, `/health`). The Load Balancer continuously pings this endpoint. If an instance returns an HTTP 200 (OK) status, it receives traffic. If it returns an error or times out, the ELB marks it 'unhealthy' and immediately stops routing traffic to it."
+    },
+    {
+      "term": "Concept: Types of AWS Load Balancers",
+      "definition": "The four generations and categories of managed load balancers offered by AWS.",
+      "explanation": "1) Classic Load Balancer (CLB - deprecated v1). 2) Application Load Balancer (ALB - Layer 7 for HTTP/HTTPS). 3) Network Load Balancer (NLB - Layer 4 for TCP/UDP). 4) Gateway Load Balancer (GWLB - Layer 3 for IP packets). Newer generation load balancers (ALB, NLB, GWLB) are always recommended as they provide advanced features. They can be configured as internal (private) or external (public)."
+    },
+    {
+      "term": "Concept: Load Balancer Security Groups",
+      "definition": "The architectural best practice for securing EC2 instances that are placed behind a Load Balancer.",
+      "explanation": "To ensure users cannot bypass the Load Balancer and access the instances directly, you configure Security Group Chaining. The Load Balancer's Security Group allows inbound traffic from anywhere on port 80/443. The EC2 instances' Security Group allows inbound traffic ONLY from the Load Balancer's Security Group ID."
+    },
+    {
+      "term": "Concept: Classic Load Balancer (CLB - v1)",
+      "definition": "The older generation (2009) AWS Load Balancer that supports both Layer 4 (TCP) and Layer 7 (HTTP/HTTPS).",
+      "explanation": "It provides a fixed DNS hostname (e.g., XXX.region.elb.amazonaws.com) and uses TCP or HTTP-based health checks. It is generally deprecated in favor of ALBs and NLBs, which are more feature-rich and cost-effective."
+    },
+    {
+      "term": "Concept: Application Load Balancer (ALB)",
+      "definition": "A Layer 7 (HTTP/HTTPS) load balancer that routes traffic based on advanced application-level data.",
+      "explanation": "ALBs support HTTP/2, WebSockets, and native redirects (like forcing HTTP to HTTPS). They are ideal for microservices and container-based applications (like Docker and ECS) because they support dynamic port mapping, allowing multiple applications to run on the same machine. Like CLBs, they provide a fixed DNS hostname, but not a static IP."
+    },
+    {
+      "term": "Concept: ALB Advanced Routing",
+      "definition": "The ability of an ALB to route traffic to different target groups based on specific HTTP request attributes.",
+      "explanation": "ALB routing tables can evaluate and route traffic based on: URL Path (example.com/users vs. /posts), Hostname (one.example.com vs. two.example.com), Query Strings (?id=123), and HTTP Headers. This eliminates the need to deploy multiple load balancers for different microservices."
+    },
+    {
+      "term": "Concept: ALB Target Groups",
+      "definition": "The logical groupings of backend destinations that an Application Load Balancer routes traffic to.",
+      "explanation": "An ALB can route to multiple Target Groups, and health checks are performed at the Target Group level. Valid targets include: EC2 instances, ECS tasks, IP Addresses (must be private IPs), and Lambda functions (where the HTTP request is automatically translated into a JSON event)."
+    },
+    {
+      "term": "Concept: ALB Client IP Visibility (X-Forwarded-For)",
+      "definition": "The mechanism used by ALBs to pass the original client's IP address to the backend application.",
+      "explanation": "Because the ALB terminates the connection from the client and opens a new connection to the EC2 instance, the instance's logs will only see the private IP of the Load Balancer. To see the true IP of the original external client, the application must extract it from the `X-Forwarded-For` HTTP header inserted by the ALB."
+    },
+    {
+      "term": "Concept: Network Load Balancer (NLB)",
+      "definition": "A Layer 4 (TCP/UDP/TLS) load balancer designed for extreme performance and ultra-low latency.",
+      "explanation": "NLBs can effortlessly handle millions of requests per second. Unlike ALBs, an NLB exposes ONE static IP address per Availability Zone, and you can even assign Elastic IPs to it (which is extremely useful if clients need to whitelist your IP in their corporate firewalls)."
+    },
+    {
+      "term": "Concept: NLB Target Groups",
+      "definition": "The backend destinations that a Network Load Balancer can route Layer 4 traffic to.",
+      "explanation": "Valid targets for an NLB include EC2 instances, IP Addresses (Private IPs only), and Application Load Balancers (ALBs). NLB health checks support TCP, HTTP, and HTTPS protocols."
+    },
+    {
+      "term": "Concept: Gateway Load Balancer (GWLB)",
+      "definition": "A Layer 3 (Network Layer - IP Protocol) load balancer used to deploy, scale, and manage a fleet of 3rd party network virtual appliances.",
+      "explanation": "GWLB is used specifically for routing traffic through security appliances like Firewalls, Intrusion Detection/Prevention Systems (IDS/IPS), or Deep Packet Inspection systems. It combines a transparent network gateway with a load balancer and uses the GENEVE protocol on port 6081."
+    },
+    {
+      "term": "Concept: Gateway Load Balancer (GWLB) Target Groups",
+      "definition": "The backend destinations that a Gateway Load Balancer can route Layer 3 traffic to.",
+      "explanation": "Valid targets for a GWLB include EC2 instances and IP Addresses. When routing to IP addresses, they must strictly be private IPs."
+    },
+    {
+      "term": "Concept: Sticky Sessions (Session Affinity)",
+      "definition": "A load balancer feature that ensures a specific client is always redirected to the exact same backend instance.",
+      "explanation": "Supported on Classic (CLB), Application (ALB), and Network (NLB) Load Balancers. It is used to ensure users do not lose their session data (like a logged-in state or shopping cart). Stickiness relies on a cookie with a controlled expiration date. Caution: Enabling stickiness can cause an imbalance in traffic load across your backend EC2 instances."
+    },
+    {
+      "term": "Concept: Sticky Sessions – Cookie Types & Names",
+      "definition": "The specific cookie mechanisms used by ALBs and CLBs to maintain session affinity.",
+      "explanation": "1) Application-based Cookies: Can be custom (generated by the target, must NOT use reserved ELB names like AWSALB, AWSALBAPP, or AWSALBTG) or Application cookies (generated by the load balancer, named AWSALBAPP). 2) Duration-based Cookies: Generated strictly by the load balancer with a specific lifespan (named AWSALB for ALB, AWSELB for CLB)."
+    },
+    {
+      "term": "Concept: Cross-Zone Load Balancing",
+      "definition": "A configuration that dictates whether a load balancer node distributes traffic evenly across all registered instances in ALL Availability Zones, or only instances within its own AZ.",
+      "explanation": "With Cross-Zone Load Balancing enabled, traffic is split evenly across all instances globally. Without it, traffic is split evenly among the ELB nodes first, which can cause severe instance overload in an Availability Zone that has fewer instances."
+    },
+    {
+      "term": "Concept: Cross-Zone Load Balancing Defaults & Billing",
+      "definition": "The default configuration states and inter-AZ data charges for Cross-Zone Load Balancing across different ELB types.",
+      "explanation": "Application Load Balancer (ALB): Enabled by default (can be disabled at the Target Group level) with NO charges for inter-AZ data. Network (NLB) & Gateway (GWLB): Disabled by default; if you enable it, you DO pay charges for inter-AZ data. Classic (CLB): Disabled by default, but incurs NO charges if enabled."
+    },
+    {
+      "term": "Concept: SSL/TLS Basics & Certificates",
+      "definition": "Protocols and X.509 server certificates used to encrypt traffic in-flight between clients and the load balancer.",
+      "explanation": "TLS is the newer, more secure version of SSL. Certificates are issued by Certificate Authorities (CAs) and have an expiration date. In AWS, you manage these using AWS Certificate Manager (ACM). An HTTPS listener requires a default certificate, but you can attach an optional list of certificates to support multiple domains."
+    },
+    {
+      "term": "Concept: Server Name Indication (SNI)",
+      "definition": "A protocol feature that allows you to load multiple SSL/TLS certificates onto a single load balancer to serve multiple secure websites.",
+      "explanation": "SNI requires the client to indicate the target hostname in the initial SSL handshake, allowing the load balancer to return the correct matching certificate. Crucial exam fact: SNI is ONLY supported by newer generation load balancers (ALB, NLB) and CloudFront; it does NOT work on Classic Load Balancers (CLBs require one CLB per SSL certificate)."
+    },
+    {
+      "term": "Concept: Connection Draining / Deregistration Delay",
+      "definition": "A feature that gives an instance time to complete existing 'in-flight' requests while it is de-registering or marked unhealthy.",
+      "explanation": "Referred to as 'Connection Draining' on CLB and 'Deregistration Delay' on ALB/NLB. During this window (1 to 3600 seconds, default 300), the load balancer stops sending NEW requests to the instance but waits for existing connections to finish. It can be disabled by setting the value to 0, which is useful if your application requests are very short."
+    },
+    {
+      "term": "Concept: Auto Scaling Group (ASG) Overview & Goals",
+      "definition": "A service that automatically manages the number of running EC2 instances to handle varying loads.",
+      "explanation": "The main goals of an ASG are to scale out (add instances) to match increased load, scale in (remove instances) when load decreases, automatically register new instances to a Load Balancer, and replace unhealthy or terminated instances. The ASG service itself is free; you only pay for the underlying EC2 resources."
+    },
+    {
+      "term": "Concept: ASG Capacity Attributes",
+      "definition": "The three core size parameters that dictate how an ASG scales: Minimum, Desired, and Maximum Capacity.",
+      "explanation": "Minimum Capacity ensures you always have a baseline number of instances running. Maximum Capacity sets a hard limit to control costs. Desired Capacity is the number of instances the ASG aims to run at any given moment, which fluctuates between the min and max bounds based on scaling policies."
+    },
+    {
+      "term": "Concept: ASG Launch Template",
+      "definition": "The blueprint used by an Auto Scaling Group to create new EC2 instances (replacing the deprecated Launch Configurations).",
+      "explanation": "A Launch Template contains all the exact configuration details needed to spin up an instance: the AMI, Instance Type, EC2 User Data, EBS Volumes, Security Groups, SSH Key Pairs, and IAM Roles. The ASG combines this template with Network/Subnet information and Load Balancer details to launch instances."
+    },
+    {
+      "term": "Concept: Auto Scaling with CloudWatch Alarms",
+      "definition": "The mechanism of linking ASG scaling actions to CloudWatch metric thresholds.",
+      "explanation": "An ASG monitors overall metrics (like Average CPU across all instances). When a CloudWatch alarm triggers (e.g., CPU exceeds 70%), it initiates a scale-out policy to add instances. If the metric drops below a threshold, a scale-in policy removes instances."
+    },
+    {
+      "term": "Concept: ASG Target Tracking Scaling",
+      "definition": "A dynamic scaling policy where you select a target metric value, and the ASG automatically adjusts capacity to maintain that target.",
+      "explanation": "It is the simplest to set up. For example, you can tell the ASG: 'I want the average CPU utilization to stay at exactly 40%.' The ASG will automatically add or remove instances to keep the metric as close to 40% as possible."
+    },
+    {
+      "term": "Concept: ASG Simple / Step Scaling",
+      "definition": "A dynamic scaling policy that adds or removes a specific number of instances based on CloudWatch alarm thresholds.",
+      "explanation": "For example, you configure rules like: 'If CPU > 70%, add 2 instances' or 'If CPU < 30%, remove 1 instance'. Step scaling allows for more granular control over how aggressively the group scales at different threshold levels."
+    },
+    {
+      "term": "Concept: Scheduled & Predictive Scaling",
+      "definition": "Policies that scale capacity ahead of time based on known usage patterns or machine learning forecasts.",
+      "explanation": "Scheduled Scaling is used for anticipated events (e.g., increasing minimum capacity to 10 every Friday at 5 PM). Predictive Scaling goes a step further by using historical data and machine learning to continuously forecast future load and automatically schedule capacity scaling ahead of time."
+    },
+    {
+      "term": "Concept: Best Metrics for ASG Scaling",
+      "definition": "The standard and custom CloudWatch metrics commonly used to trigger ASG scaling policies.",
+      "explanation": "Standard metrics include CPUUtilization (average CPU across instances), Network In / Out (for network-bound applications), and RequestCountPerTarget (to ensure the number of requests per EC2 instance remains stable behind an ALB). You can also scale based on Custom Metrics pushed to CloudWatch."
+    },
+    {
+      "term": "Concept: ASG Scaling Cooldowns",
+      "definition": "A mandatory pause period after a scaling activity occurs before the ASG will launch or terminate additional instances.",
+      "explanation": "The default cooldown is 300 seconds. During this time, the ASG blocks new scaling activities to allow the newly launched instances to start, and to let the CloudWatch metrics stabilize. Pro-tip: Use a pre-configured 'golden' AMI to reduce instance configuration time, which allows you to shorten the cooldown period safely."
+    }
+  ],
+  "test": [
+    {
+      "question": "A relational database running on a `t3.medium` EC2 instance is experiencing high CPU utilization. The administrator decides to stop the instance and change its size to a `t3.xlarge`. What type of scaling does this represent?",
+      "options": [
+        "Horizontal Scalability",
+        "Elasticity",
+        "Vertical Scalability",
+        "High Availability"
+      ],
+      "correctIndex": 2,
+      "explanation": "Vertical scalability (scaling up) involves increasing the size and computing power of a single instance, which is typical for non-distributed systems like relational databases."
+    },
+    {
+      "question": "A web application runs on EC2 instances behind an Application Load Balancer. The security team wants to ensure that users cannot bypass the ALB to directly access the backend instances. How should the EC2 instances' Security Group be configured?",
+      "options": [
+        "Allow inbound traffic from 0.0.0.0/0 on port 80 and 443.",
+        "Allow inbound traffic ONLY from the Security Group ID of the Application Load Balancer.",
+        "Deny all outbound traffic to the internet.",
+        "Configure an IAM policy that restricts access to the EC2 instances."
+      ],
+      "correctIndex": 1,
+      "explanation": "To enforce that traffic only flows through the load balancer, you use Security Group Chaining: the EC2 instances' Security Group should have an inbound rule allowing traffic only from the Load Balancer's Security Group ID."
+    },
+    {
+      "question": "An application requires an ultra-low latency load balancing solution capable of handling millions of requests per second for TCP and UDP traffic. Additionally, the load balancer must provide a static IP address in each Availability Zone. Which AWS service is the best fit?",
+      "options": [
+        "Application Load Balancer (ALB)",
+        "Gateway Load Balancer (GWLB)",
+        "Network Load Balancer (NLB)",
+        "Classic Load Balancer (CLB)"
+      ],
+      "correctIndex": 2,
+      "explanation": "The Network Load Balancer (NLB) operates at Layer 4 (TCP/UDP), delivers extreme performance and ultra-low latency, and exposes one static IP per Availability Zone (with support for Elastic IPs)."
+    },
+    {
+      "question": "A company is hosting multiple secure websites (e.g., `siteA.com`, `siteB.com`) using a single load balancer. They need to attach multiple distinct SSL/TLS certificates to the load balancer. Which feature enables this, and which load balancers support it?",
+      "options": [
+        "Server Name Indication (SNI); supported only by Application Load Balancer (ALB) and Network Load Balancer (NLB).",
+        "Cross-Zone Load Balancing; supported by all load balancers.",
+        "Server Name Indication (SNI); supported only by Classic Load Balancer (CLB).",
+        "SSL Passthrough; supported only by Gateway Load Balancer (GWLB)."
+      ],
+      "correctIndex": 0,
+      "explanation": "Server Name Indication (SNI) allows multiple SSL certificates to be hosted on a single listener. SNI is only supported on newer generation load balancers (ALB, NLB, and CloudFront), but NOT on the older Classic Load Balancer."
+    },
+    {
+      "question": "An Application Load Balancer (ALB) routes traffic to a fleet of EC2 instances. The application logic needs to record the original IP address of the user making the request. However, the application logs only show the private IP address of the ALB. How can the application retrieve the user's true IP?",
+      "options": [
+        "By querying the AWS CloudTrail logs.",
+        "By enabling VPC Flow Logs on the subnet.",
+        "By parsing the `X-Forwarded-For` HTTP header inserted by the ALB.",
+        "By assigning an Elastic IP to each EC2 instance."
+      ],
+      "correctIndex": 2,
+      "explanation": "Because an ALB intercepts and terminates the client connection, the backend instances only see the ALB's private IP. The true client IP is automatically inserted by the ALB into the `X-Forwarded-For` HTTP header."
+    },
+    {
+      "question": "A network security team wants to deploy a fleet of third-party intrusion prevention system (IPS) virtual appliances. They need a single entry and exit point that operates at Layer 3 (IP packets) to distribute traffic to these appliances. Which load balancer is designed for this use case?",
+      "options": [
+        "Network Load Balancer (NLB)",
+        "Gateway Load Balancer (GWLB)",
+        "Application Load Balancer (ALB)",
+        "Classic Load Balancer (CLB)"
+      ],
+      "correctIndex": 1,
+      "explanation": "The Gateway Load Balancer (GWLB) operates at Layer 3 and combines a transparent network gateway with a load balancer, specifically designed to manage a fleet of 3rd party network virtual appliances."
+    },
+    {
+      "question": "An e-commerce website uses an Application Load Balancer. Users are complaining that their shopping carts are unexpectedly emptying while they browse. The developer suspects that subsequent HTTP requests from the same user are being routed to different backend instances. What ELB feature should be enabled to fix this?",
+      "options": [
+        "Cross-Zone Load Balancing",
+        "Connection Draining",
+        "Sticky Sessions (Session Affinity)",
+        "Server Name Indication (SNI)"
+      ],
+      "correctIndex": 2,
+      "explanation": "Sticky Sessions (Session Affinity) ensures that a specific client is always redirected to the exact same backend instance for the duration of their session, using a cookie, thus preserving session data like a shopping cart."
+    },
+    {
+      "question": "An Auto Scaling Group (ASG) is configured to scale out when average CPU utilization exceeds 70%. When the alarm triggers, the ASG launches a new instance. However, despite the CPU remaining high, the ASG waits 5 minutes before launching another instance. What is responsible for this delay?",
+      "options": [
+        "Deregistration Delay",
+        "Scaling Cooldown period",
+        "Connection Draining",
+        "Target Tracking delay"
+      ],
+      "correctIndex": 1,
+      "explanation": "The Scaling Cooldown (default 300 seconds) is a mandatory pause period after a scaling activity. During this time, the ASG will not launch or terminate additional instances, allowing new instances to boot and metrics to stabilize."
+    },
+    {
+      "question": "A developer is configuring Target Groups for an Application Load Balancer (ALB) and wants to route traffic directly to a set of specific IP addresses. What is a strict requirement for doing this?",
+      "options": [
+        "The IP addresses must be public IPs.",
+        "The IP addresses must belong to the ALB's subnet.",
+        "The IP addresses must be private IPs.",
+        "The IP addresses must be Elastic IPs."
+      ],
+      "correctIndex": 2,
+      "explanation": "When using IP Addresses as a target in an ALB (or NLB) Target Group, the IP addresses must strictly be private IPs. Routing directly to public IPs is not supported."
+    },
+    {
+      "question": "An application is hosted on an Auto Scaling Group behind an ELB. If an instance's application service crashes and begins returning HTTP 500 errors, how does the Load Balancer respond?",
+      "options": [
+        "It automatically restarts the EC2 instance.",
+        "The ELB health check fails, the instance is marked unhealthy, and the ELB immediately stops routing traffic to it.",
+        "It caches the previous successful HTTP 200 response and serves it to users.",
+        "It forces the Auto Scaling Group to change the maximum capacity limit."
+      ],
+      "correctIndex": 1,
+      "explanation": "Load Balancers use continuous health checks (pinging a specific endpoint). If an instance returns an error (like an HTTP 500) instead of a 200 OK, it is marked unhealthy, and traffic is instantly diverted away from it."
+    },
+    {
+      "question": "An architecture requires routing HTTP requests to different microservices based on the URL path (e.g., requests to `/users` go to the User target group, while `/images` go to the Image target group). Which AWS Load Balancer natively supports this routing?",
+      "options": [
+        "Network Load Balancer",
+        "Gateway Load Balancer",
+        "Classic Load Balancer",
+        "Application Load Balancer"
+      ],
+      "correctIndex": 3,
+      "explanation": "The Application Load Balancer (ALB) operates at Layer 7 and supports advanced routing rules, including URL Path routing, Hostname routing, and Query String routing."
+    },
+    {
+      "question": "A company wants their Auto Scaling Group to maintain an exact target of 50% average CPU utilization across all instances at all times. Which scaling policy is the easiest and most appropriate to configure for this requirement?",
+      "options": [
+        "Step Scaling",
+        "Target Tracking Scaling",
+        "Simple Scaling",
+        "Scheduled Scaling"
+      ],
+      "correctIndex": 1,
+      "explanation": "Target Tracking Scaling is a dynamic policy where you select a target metric value (e.g., 50% CPU), and the ASG automatically adjusts capacity in or out to keep the metric as close to that target as possible."
+    },
+    {
+      "question": "What happens when you enable Cross-Zone Load Balancing on a Network Load Balancer (NLB)?",
+      "options": [
+        "Traffic is distributed evenly across all instances in all AZs, and inter-AZ data transfer charges apply.",
+        "Traffic is distributed evenly across all instances in all AZs, and it is free of charge.",
+        "The NLB automatically converts into an Application Load Balancer.",
+        "It allows the NLB to route traffic to a Gateway Load Balancer."
+      ],
+      "correctIndex": 0,
+      "explanation": "For an NLB (and GWLB), Cross-Zone Load Balancing is disabled by default. If you choose to enable it to distribute traffic evenly across all AZs, AWS will charge you for the inter-AZ data transfer (unlike ALBs, where it is enabled by default and free)."
+    },
+    {
+      "question": "A company is preparing for a major marketing event that will launch exactly at 9:00 AM on Monday, expecting an immediate massive influx of traffic. They want their Auto Scaling Group to spin up 20 instances before the event starts. Which scaling policy should they use?",
+      "options": [
+        "Predictive Scaling",
+        "Target Tracking Scaling",
+        "Scheduled Scaling",
+        "Step Scaling"
+      ],
+      "correctIndex": 2,
+      "explanation": "Scheduled Scaling is used to proactively scale capacity ahead of time based on known, anticipated usage patterns (like a scheduled marketing event)."
+    },
+    {
+      "question": "An EC2 instance behind an ALB is selected for termination by an Auto Scaling scale-in event. Before terminating, the load balancer stops sending new requests to the instance but allows existing in-flight connections up to 300 seconds to finish. What is this ALB feature called?",
+      "options": [
+        "Connection Draining",
+        "Deregistration Delay",
+        "Sticky Sessions",
+        "Scaling Cooldown"
+      ],
+      "correctIndex": 1,
+      "explanation": "This feature is called 'Deregistration Delay' on ALBs and NLBs (and 'Connection Draining' on Classic Load Balancers). It allows active sessions to complete gracefully while preventing new connections to an instance that is shutting down."
+    },
+    {
+      "question": "To standardize their deployments, a DevOps team wants to define the AMI, Instance Type, EC2 User Data, and Security Groups for their Auto Scaling Group in a reusable blueprint. Which ASG feature should they use?",
+      "options": [
+        "Launch Template",
+        "Target Group",
+        "Scaling Policy",
+        "CloudWatch Alarm"
+      ],
+      "correctIndex": 0,
+      "explanation": "A Launch Template serves as the blueprint for an ASG, containing all the configuration details needed to spin up new EC2 instances (replacing the older, deprecated Launch Configurations)."
+    },
+    {
+      "question": "A developer creates a custom cookie to implement sticky sessions for an application behind an Application Load Balancer. Which of the following cookie names is valid for the developer to use?",
+      "options": [
+        "AWSALB",
+        "AWSALBAPP",
+        "AWSALBTG",
+        "MyAppSessionCookie"
+      ],
+      "correctIndex": 3,
+      "explanation": "When creating a custom application-based cookie, you can use any name except the names reserved by the Elastic Load Balancer (AWSALB, AWSALBAPP, and AWSALBTG)."
+    },
+    {
+      "question": "Which of the following is true regarding the pricing of an Auto Scaling Group (ASG)?",
+      "options": [
+        "You pay a flat monthly fee for the ASG service itself.",
+        "You pay per scaling event executed by the ASG.",
+        "The ASG service is free; you only pay for the underlying EC2 resources it launches.",
+        "You are billed based on the maximum capacity limit, regardless of how many instances are running."
+      ],
+      "correctIndex": 2,
+      "explanation": "The Auto Scaling Group service itself is completely free of charge. You are only billed for the actual AWS resources (like EC2 instances and EBS volumes) that the ASG provisions."
+    },
+    {
+      "question": "An Auto Scaling Group is currently running 4 instances. The Minimum capacity is set to 2, the Desired capacity is 4, and the Maximum capacity is 10. A scale-in policy triggers due to low traffic. What happens next?",
+      "options": [
+        "The ASG will remove 3 instances because the Minimum capacity allows it.",
+        "The ASG will adjust the Desired capacity downwards and terminate instances, but will not drop below 2 instances.",
+        "The ASG will change the Maximum capacity to 4.",
+        "The ASG will terminate all instances."
+      ],
+      "correctIndex": 1,
+      "explanation": "The ASG scales in by reducing the Desired Capacity, terminating instances to match it. However, it will never scale below the configured Minimum Capacity bound (which is 2 in this scenario)."
+    },
+    {
+      "question": "A SysOps administrator wants to ensure that a web application running in an Auto Scaling Group is highly available. How should the ASG and Load Balancer be configured?",
+      "options": [
+        "Place all EC2 instances in a single Availability Zone to reduce latency.",
+        "Use Vertical Scaling to ensure instances are large enough to handle traffic spikes.",
+        "Configure the ASG and the Load Balancer to span across at least two Availability Zones.",
+        "Use a Classic Load Balancer with Cross-Zone Load Balancing disabled."
+      ],
+      "correctIndex": 2,
+      "explanation": "To achieve High Availability, the architecture must survive a data center loss. Therefore, both the Load Balancer and the Auto Scaling Group must be configured to span across multiple Availability Zones."
+    },
+	{
+    "question": "Scaling an EC2 instance from r4.large to r4.4xlarge is called ...................",
+    "options": [
+      "Horizontal Scalability",
+      "Vertical Scalability"
+    ],
+    "correctIndex": 1,
+    "explanation": "Changing the size or type of an existing EC2 instance (e.g., upgrading from a smaller instance size to a larger one with more CPU and RAM) is known as vertical scaling or 'scaling up'."
+  },
+  {
+    "question": "Running an application on an Auto Scaling Group that scales the number of EC2 instances in and out is called ...................",
+    "options": [
+      "Horizontal Scalability",
+      "Vertical Scalability"
+    ],
+    "correctIndex": 0,
+    "explanation": "Adding or removing individual instances to adapt to workload demands (scaling out and scaling in) is known as horizontal scaling. This approach helps distribute traffic across multiple nodes rather than relying on a single larger machine."
+  },
+  {
+    "question": "Elastic Load Balancers provide a ...................",
+    "options": [
+      "static IPv4 we can use in our application",
+      "static DNS name we can use in our application",
+      "static IPv6 we can use in our application"
+    ],
+    "correctIndex": 1,
+    "explanation": "AWS handles the scaling of Elastic Load Balancers dynamically, which means their underlying IP addresses can change frequently. Because of this, AWS provides a permanent, static DNS name that you can safely map to your application endpoints instead of relying on a fixed IP address."
+  },
+  {
+    "question": "You are running a website on 10 EC2 instances fronted by an Elastic Load Balancer. Your users are complaining about the fact that the website always asks them to re-authenticate when they are moving between website pages. You are puzzled because it's working just fine on your machine and in the Dev environment with 1 EC2 instance. What could be the reason?",
+    "options": [
+      "Your website must have an issue when hosted on multiple EC2 instances",
+      "The EC2 instances log out users as they can't see their IP addresses, instead, they receive ELB IP addresses.",
+      "The Elastic Load Balancer does not have Sticky Sessions enabled"
+    ],
+    "correctIndex": 2,
+    "explanation": "Without Sticky Sessions (session affinity) enabled, the Elastic Load Balancer distributes consecutive requests from the same user across different EC2 instances. If the instances do not share session state, landing on a new instance forces the user to re-authenticate. Enabling sticky sessions ensures a user is consistently routed to the same backend instance for the duration of their session."
+  },
+  {
+    "question": "You are using an Application Load Balancer to distribute traffic to your website hosted on EC2 instances. It turns out that your website only sees traffic coming from private IPv4 addresses which are in fact your Application Load Balancer's IP addresses. What should you do to get the IP address of clients connected to your website?",
+    "options": [
+      "Modify your website's frontend so that users send their IP in every request",
+      "Modify your website's backend to get the client IP address from the X-Forwarded-For header",
+      "Modify your website's backend to get the client IP address from the X-Forwarded-Port header",
+      "Modify your website's backend to get the client IP address from the X-Forwarded-Proto header"
+    ],
+    "correctIndex": 1,
+    "explanation": "When an Application Load Balancer routes traffic to target instances, it intercepts the client request and uses its own private IP address. To preserve the original client connectivity details, the ALB automatically appends the client's public IP address into the 'X-Forwarded-For' HTTP header, which the backend application can then extract."
+  },
+  {
+    "question": "You hosted an application on a set of EC2 instances fronted by an Elastic Load Balancer. A week later, users begin complaining that sometimes the application just doesn't work. You investigate the issue and found that some EC2 instances crash from time to time. What should you do to protect users from connecting to the EC2 instances that are crashing?",
+    "options": [
+      "Enable ELB Health Checks",
+      "Enable ELB Stickiness",
+      "Enable SSL Termination",
+      "Enable Cross-Zone Load Balancing"
+    ],
+    "correctIndex": 0,
+    "explanation": "Enabling ELB Health Checks allows the load balancer to monitor the status of your backend instances actively. If an EC2 instance crashes or fails a health check, the load balancer automatically marks it as unhealthy and stops routing user traffic to it until it recovers or gets replaced."
+  },
+  {
+    "question": "You are working as a Solutions Architect for a company and you are required to design an architecture for a high-performance, low-latency application that will receive millions of requests per second. Which type of Elastic Load Balancer should you choose?",
+    "options": [
+      "Application Load Balancer",
+      "Network Load Balancer"
+    ],
+    "correctIndex": 1,
+    "explanation": "A Network Load Balancer (NLB) operates at the Transport Layer (Layer 4) and is specifically engineered to handle millions of requests per second with ultra-low latencies. Unlike an Application Load Balancer, an NLB excels at handling volatile and extreme traffic patterns using raw TCP/UDP networking."
+  },
+  {
+    "question": "Application Load Balancers support the following protocols, EXCEPT:",
+    "options": [
+      "HTTP",
+      "HTTPS",
+      "TCP",
+      "WebSocket"
+    ],
+    "correctIndex": 2,
+    "explanation": "An Application Load Balancer (ALB) is a Layer 7 device designed specifically for web and application-level routing. It natively supports HTTP, HTTPS, HTTP/2, gRPC, and WebSockets, but it does not support raw Layer 4 TCP traffic, which is handled instead by Network Load Balancers."
+  },
+  {
+    "question": "Application Load Balancers can route traffic to different Target Groups based on the following, EXCEPT:",
+    "options": [
+      "Client's Location (Geography)",
+      "Hostname",
+      "Request URL Path",
+      "Source IP Address"
+    ],
+    "correctIndex": 0,
+    "explanation": "An Application Load Balancer can evaluate advanced HTTP routing rules based on hostnames, request URL paths, source IP addresses, HTTP headers, and query strings. However, it cannot natively route traffic based directly on the client's geographic location; that type of latency or geo-proximity routing is typically handled at the DNS layer via Amazon Route 53."
+  },
+   {
+    "question": "Registered targets in a Target Groups for an Application Load Balancer can be one of the following, EXCEPT:",
+    "options": [
+      "EC2 Instances",
+      "Network Load Balancer",
+      "Private IP Addresses",
+      "Lambda Functions"
+    ],
+    "correctIndex": 1,
+    "explanation": "An Application Load Balancer (ALB) can route requests to target groups containing EC2 instances, private IP addresses, or AWS Lambda functions. However, an ALB target group cannot register a Network Load Balancer (NLB) as a backend target directly; rather, it is the reverse architectural pattern (an NLB fronting an ALB) that is supported by AWS."
+  },
+  {
+    "question": "For compliance purposes, you would like to expose a fixed static IP address to your end-users so that they can write firewall rules that will be stable and approved by regulators. What type of Elastic Load Balancer would you choose?",
+    "options": [
+      "Application Load Balancer with an Elastic IP attached to it",
+      "Network Load Balancer"
+    ],
+    "correctIndex": 1,
+    "explanation": "A Network Load Balancer (NLB) automatically provides a static IP address for each Availability Zone it is enabled in, and you can also optionally associate a specific Elastic IP address with it. Conversely, an Application Load Balancer (ALB) scales dynamically and its IP addresses change frequently over time, with no native support for assigning static Elastic IPs directly to the load balancer itself."
+  },
+  {
+    "question": "You want to create a custom application-based cookie in your Application Load Balancer. Which of the following you can use as a cookie name?",
+    "options": [
+      "AWSALBAPP",
+      "APPUSERC",
+      "AWSALBTG",
+      "AWSALB"
+    ],
+    "correctIndex": 1,
+    "explanation": "When configuring custom application-based cookies for target group stickiness on an ALB, you must choose a name that does not conflict with the prefixes or names reserved by AWS. The names 'AWSALB', 'AWSALBAPP', and 'AWSALBTG' are strictly reserved by the Application Load Balancer itself for its own managed cookies, making 'APPUSERC' a valid custom option."
+  },
+  {
+    "question": "You have a Network Load Balancer that distributes traffic across a set of EC2 instances in us-east-1. You have 2 EC2 instances in us-east-1b AZ and 5 EC2 instances in us-east-1e AZ. You have noticed that the CPU utilization is higher in the EC2 instances in us-east-1b AZ. After more investigation, you noticed that the traffic is equally distributed across the two AZs. How would you solve this problem?",
+    "options": [
+      "Enable Cross-Zone Load Balancing",
+      "Enable Sticky Sessions",
+      "Enable ELB Health Checks",
+      "Enable SSL Termination"
+    ],
+    "correctIndex": 0,
+    "explanation": "By default, a Network Load Balancer distributes traffic evenly across its enabled Availability Zones (50% to each AZ in this scenario). This causes the 2 instances in us-east-1b to handle much more traffic per instance than the 5 instances in us-east-1e. Enabling Cross-Zone Load Balancing instructs the NLB to distribute traffic evenly across all individual registered target instances regardless of their AZ."
+  },
+  {
+    "question": "Which feature in both Application Load Balancers and Network Load Balancers allows you to load multiple SSL certificates on one listener?",
+    "options": [
+      "TLS Termination",
+      "Server Name Indication (SNI)",
+      "SSL Security Policies",
+      "Host Headers"
+    ],
+    "correctIndex": 1,
+    "explanation": "Server Name Indication (SNI) is an extension to the TLS protocol that indicates which hostname the client is attempting to connect to at the start of the handshaking process. This allows a single load balancer listener to host multiple secure websites, each with its own dedicated SSL/TLS certificate."
+  },
+  {
+    "question": "You have an Application Load Balancer that is configured to redirect traffic to 3 Target Groups based on the following hostnames: ://example.com, ://example.com, and ://example.com. You would like to configure HTTPS for each of these hostnames. How do you configure the ALB to make this work?",
+    "options": [
+      "Use an HTTP to HTTPS redirect rule",
+      "Use a security group SSL certificate",
+      "Use Server Name Indication (SNI)"
+    ],
+    "correctIndex": 2,
+    "explanation": "To support multiple unique hostnames with distinct SSL certificates on a single Application Load Balancer listener, you must utilize Server Name Indication (SNI). The ALB will intelligently inspect the SNI host header sent by the client during the TLS handshake and automatically present the correct matching certificate."
+  },
+  {
+    "question": "You have an application hosted on a set of EC2 instances managed by an Auto Scaling Group that you configured both desired and maximum capacity to 3. Also, you have created a CloudWatch Alarm that is configured to scale out your ASG when CPU Utilization reaches 60%. Your application suddenly received huge traffic and is now running at 80% CPU Utilization. What will happen?",
+    "options": [
+      "Nothing",
+      "The desired capacity will go up to 4 and the maximum capacity will stay at 3",
+      "The desired capacity will go up to 4 and the maximum capacity will stay at 4"
+    ],
+    "correctIndex": 0,
+    "explanation": "Even though the CloudWatch alarm is triggered because CPU utilization reached 80% (exceeding the 60% threshold), the Auto Scaling Group cannot scale out beyond its configured maximum capacity. Since the desired and maximum capacities are both rigidly set to 3, the ASG will do nothing."
+  },
+  {
+    "question": "You have an Auto Scaling Group fronted by an Application Load Balancer. You have configured the ASG to use ALB Health Checks, then one EC2 instance has just been reported unhealthy. What will happen to the EC2 instance?",
+    "options": [
+      "The ASG will keep the instance running and re-start the application",
+      "The ASG will detach the EC2 instance and leave it running",
+      "The ASG will terminate the EC2 instance"
+    ],
+    "correctIndex": 2,
+    "explanation": "When an Auto Scaling Group is configured to use ALB health checks, it relies on the load balancer's assessment of instance health. If the ALB marks an instance as unhealthy, the ASG automatically triggers its replacement workflow by terminating the failing EC2 instance and launching a brand new one."
+  },
+  {
+    "question": "Your boss asked you to scale your Auto Scaling Group based on the number of requests per minute your application makes to your database. What should you do?",
+    "options": [
+      "Create a CloudWatch custom metric then create a CloudWatch Alarm on this metric to scale your ASG",
+      "You politely tell him it's impossible",
+      "Enable Detailed Monitoring then create a CloudWatch Alarm to scale your ASG"
+    ],
+    "correctIndex": 0,
+    "explanation": "The number of requests per minute made to a database is not a standard, built-in metric provided automatically by AWS EC2 or Auto Scaling. To scale based on this specific application behavior, you must publish a custom metric to Amazon CloudWatch from your application or database logs, and then configure a CloudWatch Alarm on that custom metric to trigger the ASG scaling policy."
+  },
+  {
+    "question": "An application is deployed with an Application Load Balancer and an Auto Scaling Group. Currently, you manually scale the ASG and you would like to define a Scaling Policy that will ensure the average number of connections to your EC2 instances is around 1000. Which Scaling Policy should you use?",
+    "options": [
+      "Simple Scaling Policy",
+      "Step Scaling Policy",
+      "Target Tracking Policy",
+      "Scheduled Scaling Policy"
+    ],
+    "correctIndex": 2,
+    "explanation": "A Target Tracking Scaling Policy allows you to specify a target value for a specific metric (in this case, maintaining an average of 1000 connections per instance). The Auto Scaling Group then automatically adjusts its capacity up or down to keep the metric at or close to that defined target value, functioning similarly to how a thermostat regulates temperature."
+  },
+  {
+    "question": "You have an ASG and a Network Load Balancer. The application on your ASG supports the HTTP protocol and is integrated with the Load Balancer health checks. You are currently using the TCP health checks. You would like to migrate to using HTTP health checks, what do you do?",
+    "options": [
+      "Migrate to an Application Load Balancer",
+      "Migrate the health check to HTTP"
+    ],
+    "correctIndex": 1,
+    "explanation": "A Network Load Balancer (NLB) operates at Layer 4 but natively supports HTTP and HTTPS health checks in addition to TCP. Since the application running on the EC2 instances already supports HTTP traffic, you simply need to update the configuration of the NLB Target Group to migrate its health checks from TCP to HTTP."
+  },
+  {
+    "question": "You have a website hosted in EC2 instances in an Auto Scaling Group fronted by an Application Load Balancer. Currently, the website is served over HTTP, and you have been tasked to configure it to use HTTPS. You have created a certificate in ACM and attached it to the Application Load Balancer. What you can do to force users to access the website using HTTPS instead of HTTP?",
+    "options": [
+      "Send an email to all customers to use HTTPS instead of HTTP",
+      "Configure the Application Load Balancer to redirect HTTP to HTTPS",
+      "Configure the DNS record to redirect HTTP to HTTPS"
+    ],
+    "correctIndex": 1,
+    "explanation": "To strictly enforce secure connections, you should configure the HTTP (Port 80) listener on the Application Load Balancer (ALB) with a routing rule that returns a permanent redirect (HTTP 301) to the HTTPS (Port 443) endpoint. DNS records themselves do not have the native capability to handle HTTP protocol-level redirects."
+  }
+  ]
+}
