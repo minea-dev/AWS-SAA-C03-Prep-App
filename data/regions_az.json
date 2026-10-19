@@ -1,48 +1,112 @@
 {
-  "title": "Regions & Availability Zones",
+  "title": "AWS Global Infrastructure, Regions & AZs",
   "study": [
     {
-      "term": "A multinational company is launching an e-commerce multi-tier application. Due to aggressive marketing promotions, the company expects massive traffic spikes on the launch day. As a Solutions Architect, you must design a database architecture that prevents any potential failure in the database layer and ensures high availability. Which configuration should you choose?",
-      "definition": "Migrate the database to Amazon RDS in a Multi-AZ deployment.",
-      "explanation": "When preparing for high-traffic events, ensuring high availability is crucial. Amazon RDS Multi-AZ automatically provisions and maintains a synchronous standby replica in a different Availability Zone within the same Region. In the event of an infrastructure failure or Availability Zone disruption, Amazon RDS automatically fails over to the standby so that database operations can resume quickly."
+      "term": "Concept: AWS Global Infrastructure Overview",
+      "definition": "The foundation of the AWS Cloud, consisting of Regions, Availability Zones (AZs), Data Centers, and Points of Presence (Edge Locations).",
+      "explanation": "This global infrastructure allows customers to build highly available, fault-tolerant, and scalable applications worldwide, ensuring data can be stored and processed close to the end users."
     },
     {
-      "term": "A food company is building an application to collect customer feedback. This application will be deployed across 3 Amazon EC2 instances and needs to remain highly available. The architecture must survive the failure of a single data center without any downtime. What is the BEST architectural design for the VPC subnets?",
-      "definition": "Deploy the EC2 instances in private subnets spread across 3 separate Availability Zones and place them behind an Application Load Balancer.",
-      "explanation": "Deploying instances across multiple Availability Zones provides High Availability (HA) against a single data center failure. For security best practices in a web architecture, the EC2 instances should reside in private subnets, while an internet-facing Application Load Balancer in public subnets routes the traffic to them across the AZs."
+      "term": "Concept: AWS Regions",
+      "definition": "A Region is a geographical area around the world that consists of a cluster of data centers.",
+      "explanation": "AWS has regions all around the world with naming conventions like 'us-east-1' or 'eu-west-3'. It is crucial to understand that MOST AWS services are region-scoped, meaning the resources you create are tied to a specific region."
     },
     {
-      "term": "A company needs a disaster recovery (DR) solution with a Recovery Time Objective (RTO) of 4 hours and a Recovery Point Objective (RPO) of 1 hour. Currently, their primary infrastructure is located in us-east-1, but their compliance team requires recovery capabilities in an entirely different geographic location in case of a catastrophic event affecting the primary region. Which approach is best?",
-      "definition": "Replicate data and deploy a pilot light environment in a secondary AWS Region (e.g., us-west-2).",
-      "explanation": "A Multi-Region architecture is required for disaster recovery scenarios when compliance mandates surviving the loss of an entire geographic region. A \"pilot light\" approach in a secondary region meets the RTO of 4 hours and RPO of 1 hour cost-effectively."
+      "term": "Concept: 4 Factors for Choosing an AWS Region",
+      "definition": "When architecting on AWS, you must choose a region based on Compliance, Proximity, Available Services, and Pricing.",
+      "explanation": "1) Compliance: Data never leaves a region without your explicit permission (crucial for data sovereignty laws). 2) Proximity to customers: Reduces network latency. 3) Available services: New features and services aren't immediately available in every region. 4) Pricing: Cost of services varies from region to region."
     },
     {
-      "term": "A scientific magazine has a web application that allows users around the world to upload and download large research files. These files are saved in an Amazon S3 bucket located in us-east-1. Users in Europe are experiencing slow performance and high latency when downloading these files during peak times. What is the BEST solution to improve download performance for the users in Europe?",
-      "definition": "Use Amazon CloudFront to cache and deliver the content using Edge Locations globally.",
-      "explanation": "Amazon CloudFront is a Content Delivery Network (CDN) that utilizes AWS Edge Locations worldwide to cache static content closer to end users. This drastically reduces latency and improves download speeds globally."
+      "term": "Concept: AWS Availability Zones (AZs)",
+      "definition": "An AZ is one or more discrete data centers with redundant power, networking, and connectivity within a Region.",
+      "explanation": "Each region has multiple AZs (usually a minimum of 3, up to 6). They are named with a letter suffix (e.g., ap-southeast-2a). AZs are physically separated from each other to be isolated from disasters, but are connected with high-bandwidth, ultra-low latency networking."
     },
     {
-      "term": "An e-commerce application is hosted in AWS and uses a distributed database installed on multiple Amazon EC2 instances. The database stores all its data on storage volumes attached to the instances. The operation must be fault-tolerant up to the loss of a single EC2 instance. Which storage solution should be used?",
-      "definition": "Amazon Elastic Block Store (EBS)",
-      "explanation": "Amazon Elastic Block Store (EBS) provides persistent block storage volumes specifically designed for EC2 instances. EBS volumes are highly durable, fault-tolerant, and their data is automatically replicated within their Availability Zone."
+      "term": "Concept: AWS Points of Presence (Edge Locations)",
+      "definition": "A global network of 400+ Edge Locations and 10+ Regional Caches located in 90+ cities.",
+      "explanation": "Their primary purpose is to cache and deliver content to end users with the lowest possible latency. They are heavily used by services like Amazon CloudFront and AWS Global Accelerator."
     },
     {
-      "term": "A company needs to host an application that strictly requires single-digit millisecond latency for users in Los Angeles. However, the nearest standard AWS Region is us-west-1 (Northern California). The company cannot accept the network latency of routing traffic to Northern California. What should the Solutions Architect recommend?",
-      "definition": "Deploy the application resources in an AWS Local Zone located in Los Angeles.",
-      "explanation": "AWS Local Zones place compute, storage, database, and other select AWS services closer to large population centers where no AWS Region exists today. They are specifically designed to deliver single-digit millisecond latency."
+      "term": "Concept: Global vs. Region-Scoped Services",
+      "definition": "Most AWS services are bound to a specific region, but a few core services operate globally across all regions simultaneously.",
+      "explanation": "Global Services include IAM (Identity and Access Management), Route 53 (DNS service), CloudFront (Content Delivery Network), and WAF (Web Application Firewall). Region-scoped services include EC2, VPC, and Lambda."
     },
     {
-      "term": "A financial company based in Europe is migrating to AWS. They are legally required to keep all customer data within the country to comply with strict data sovereignty laws. Which factor is the primary driver for selecting their AWS Region, and how does AWS handle this data?",
-      "definition": "Compliance requirements. AWS ensures that data never leaves a Region without the customer's explicit permission.",
-      "explanation": "The four main factors for choosing an AWS Region are Compliance, Proximity (latency), Service Availability, and Pricing. For legal data sovereignty, choosing a specific region ensures compliance because AWS architecture guarantees data residency within the selected region."
+      "term": "Concept: High Availability (HA) for Compute",
+      "definition": "Deploying instances across multiple Availability Zones to survive a single data center failure.",
+      "explanation": "For security and HA best practices in web architecture, EC2 instances should reside in private subnets spread across multiple AZs, with an internet-facing Application Load Balancer in public subnets routing the traffic to them."
     },
     {
-      "term": "A Solutions Architect is designing a new cloud architecture and needs to configure user permissions, DNS routing, and provision compute instances. Which of the following services operate globally and do NOT require selecting a specific AWS Region?",
-      "definition": "AWS IAM (Identity and Access Management) and Amazon Route 53.",
-      "explanation": "AWS IAM, Route 53, CloudFront, and WAF are Global Services. Most other services, such as Amazon EC2, VPC, and Lambda, are Region-scoped and require you to select a specific region before provisioning resources."
+      "term": "Concept: High Availability (HA) for Databases",
+      "definition": "Deploying databases in a Multi-AZ configuration.",
+      "explanation": "Amazon RDS Multi-AZ automatically provisions and maintains a synchronous standby replica in a different Availability Zone within the same Region. If an infrastructure failure occurs, RDS automatically fails over to the standby."
+    },
+    {
+      "term": "Concept: Disaster Recovery (Multi-Region)",
+      "definition": "Replicating data and deploying environments in a secondary AWS Region.",
+      "explanation": "A Multi-Region architecture is required when compliance mandates surviving the loss of an entire geographic region. A 'pilot light' approach in a secondary region is a cost-effective way to meet strict RTO/RPO requirements."
+    },
+    {
+      "term": "Concept: Global Content Delivery",
+      "definition": "Using Amazon CloudFront to cache content using Edge Locations globally.",
+      "explanation": "CloudFront utilizes AWS Edge Locations worldwide to cache static content (like S3 objects) closer to end users. This drastically reduces latency and improves download speeds globally without the high cost of replicating buckets everywhere."
+    },
+    {
+      "term": "Concept: EC2 Fault-Tolerant Storage",
+      "definition": "Amazon Elastic Block Store (EBS) provides persistent block storage specifically designed for EC2.",
+      "explanation": "EBS volumes are highly durable and their data is automatically replicated within their Availability Zone to prevent data loss from a single hardware component failure. (Unlike Instance Store, which is ephemeral)."
+    },
+    {
+      "term": "Concept: Ultra-Low Latency Compute",
+      "definition": "AWS Local Zones place select AWS services closer to large population or industry centers.",
+      "explanation": "When a standard AWS Region is too far and network latency is unacceptable, Local Zones deliver single-digit millisecond latency for applications (e.g., in Los Angeles when the closest region is Northern California)."
     }
   ],
   "test": [
+    {
+      "question": "A healthcare startup based in Germany is moving its application to AWS. Due to strict data sovereignty laws, all patient data must remain within the country. The Solutions Architect selects the eu-central-1 region. How can the architect guarantee that data will not be moved to another region?",
+      "options": [
+        "Configure AWS Organizations to block Cross-Region Replication.",
+        "No action is needed. AWS data never leaves a Region without explicit customer permission.",
+        "Create an IAM policy that denies the s3:Transfer endpoint.",
+        "Use Amazon VPC endpoints to isolate the region."
+      ],
+      "correctIndex": 1,
+      "explanation": "One of the fundamental principles of AWS Regions is compliance with data governance. Data is never moved between regions by AWS unless explicitly configured or permitted by the customer."
+    },
+    {
+      "question": "A company wants to deploy a highly available web application on Amazon EC2. The architecture must survive a localized disaster, such as a flood or power grid failure affecting a specific data center facility. Which deployment strategy should the company use?",
+      "options": [
+        "Deploy the EC2 instances in a single Availability Zone but use multiple discrete data centers.",
+        "Deploy the EC2 instances across multiple Availability Zones within the same AWS Region.",
+        "Deploy the EC2 instances in different AWS Regions.",
+        "Deploy the EC2 instances in an AWS Edge Location."
+      ],
+      "correctIndex": 1,
+      "explanation": "Each Availability Zone (AZ) is one or more discrete data centers with redundant power, networking, and connectivity. Deploying across multiple AZs provides High Availability against a single data center failure."
+    },
+    {
+      "question": "A Solutions Architect is provisioning resources for a new application. Which of the following AWS services operate globally and are NOT bound to a specific AWS Region?",
+      "options": [
+        "Amazon EC2 and Amazon VPC",
+        "AWS Lambda and Amazon S3",
+        "AWS IAM and Amazon Route 53",
+        "Amazon RDS and Amazon DynamoDB"
+      ],
+      "correctIndex": 2,
+      "explanation": "AWS Identity and Access Management (IAM), Amazon Route 53, Amazon CloudFront, and AWS WAF are Global Services. Compute, networking, and most database services (like EC2, VPC, Lambda, and RDS) are Region-scoped."
+    },
+    {
+      "question": "When designing an architecture in a new AWS Region, what is the standard minimum number of Availability Zones you can expect to find?",
+      "options": [
+        "1",
+        "2",
+        "3",
+        "6"
+      ],
+      "correctIndex": 2,
+      "explanation": "Each AWS region has many availability zones. The standard minimum is usually 3, and the maximum is 6."
+    },
     {
       "question": "A multinational company is launching an e-commerce multi-tier application. Due to aggressive marketing promotions, the company expects massive traffic spikes on the launch day. As a Solutions Architect, you must design a database architecture that prevents any potential failure in the database layer and ensures high availability. Which configuration should you choose?",
       "options": [
@@ -52,10 +116,10 @@
         "Create another Disaster Recovery (DR) site in a different AWS Region using active-active replication."
       ],
       "correctIndex": 1,
-      "explanation": "When preparing for high-traffic events, ensuring high availability is crucial. Amazon RDS Multi-AZ automatically provisions and maintains a synchronous standby replica in a different Availability Zone within the same Region. In the event of an infrastructure failure or Availability Zone disruption, Amazon RDS automatically fails over to the standby so that database operations can resume quickly."
+      "explanation": "Amazon RDS Multi-AZ automatically provisions and maintains a synchronous standby replica in a different Availability Zone within the same Region. In the event of an infrastructure failure, Amazon RDS automatically fails over to the standby."
     },
     {
-      "question": "A food company is building an application to collect customer feedback. This application will be deployed across 3 Amazon EC2 instances and needs to remain highly available. The architecture must survive the failure of a single data center without any downtime. What is the BEST architectural design for the VPC subnets?",
+      "question": "A food company is building an application to collect customer feedback. This application will be deployed across 3 Amazon EC2 instances and needs to remain highly available. What is the BEST architectural design for the VPC subnets?",
       "options": [
         "Deploy all 3 EC2 instances in a single public subnet within one Availability Zone.",
         "Deploy the EC2 instances across 3 different Availability Zones using a single public subnet.",
@@ -63,7 +127,7 @@
         "Deploy the instances across 3 different AWS Regions to ensure maximum fault tolerance."
       ],
       "correctIndex": 2,
-      "explanation": "Deploying instances across multiple Availability Zones provides High Availability (HA) against a single data center failure. For security best practices in a web architecture, the EC2 instances should reside in private subnets, while an internet-facing Application Load Balancer in public subnets routes the traffic to them across the AZs."
+      "explanation": "For security best practices in a web architecture, EC2 instances should reside in private subnets spread across multiple AZs (for High Availability), while an internet-facing Application Load Balancer in public subnets routes the traffic to them."
     },
     {
       "question": "A company needs a disaster recovery (DR) solution with a Recovery Time Objective (RTO) of 4 hours and a Recovery Point Objective (RPO) of 1 hour. Currently, their primary infrastructure is located in us-east-1, but their compliance team requires recovery capabilities in an entirely different geographic location in case of a catastrophic event affecting the primary region. Which approach is best?",
@@ -74,7 +138,7 @@
         "Replicate data and deploy a pilot light environment in a secondary AWS Region (e.g., us-west-2)."
       ],
       "correctIndex": 3,
-      "explanation": "A Multi-Region architecture is required for disaster recovery scenarios when compliance mandates surviving the loss of an entire geographic region. A \"pilot light\" approach in a secondary region meets the RTO of 4 hours and RPO of 1 hour cost-effectively."
+      "explanation": "A Multi-Region architecture is required for disaster recovery scenarios when compliance mandates surviving the loss of an entire geographic region. A 'pilot light' approach in a secondary region meets the RTO/RPO cost-effectively."
     },
     {
       "question": "A scientific magazine has a web application that allows users around the world to upload and download large research files. These files are saved in an Amazon S3 bucket located in us-east-1. Users in Europe are experiencing slow performance and high latency when downloading these files during peak times. What is the BEST solution to improve download performance for the users in Europe?",
@@ -85,7 +149,7 @@
         "Deploy an S3 File Gateway in each user's local network."
       ],
       "correctIndex": 0,
-      "explanation": "Amazon CloudFront is a Content Delivery Network (CDN) that utilizes AWS Edge Locations worldwide to cache static content closer to end users. This drastically reduces latency and improves download speeds globally."
+      "explanation": "Amazon CloudFront is a Content Delivery Network (CDN) that utilizes AWS Edge Locations (Points of Presence) worldwide to cache static content closer to end users, drastically reducing latency globally."
     },
     {
       "question": "An e-commerce application is hosted in AWS and uses a distributed database installed on multiple Amazon EC2 instances. The database stores all its data on storage volumes attached to the instances. The operation must be fault-tolerant up to the loss of a single EC2 instance. Which storage solution should be used?",
@@ -107,29 +171,7 @@
         "Deploy the application resources in an AWS Local Zone located in Los Angeles."
       ],
       "correctIndex": 3,
-      "explanation": "AWS Local Zones place compute, storage, database, and other select AWS services closer to large population centers where no AWS Region exists today. They are specifically designed to deliver single-digit millisecond latency."
-    },
-    {
-      "question": "A healthcare startup based in Germany is moving its application to AWS. Due to strict data sovereignty laws, all patient data must remain within the country. The Solutions Architect selects the eu-central-1 region. How can the architect guarantee that data will not be moved to another region?",
-      "options": [
-        "Configure AWS Organizations to block Cross-Region Replication.",
-        "No action is needed. AWS data never leaves a Region without explicit customer permission.",
-        "Create an IAM policy that denies the s3:Transfer endpoint.",
-        "Use Amazon VPC endpoints to isolate the region."
-      ],
-      "correctIndex": 1,
-      "explanation": "One of the fundamental principles of AWS Regions is compliance with data governance. Data is never moved between regions by AWS unless explicitly configured or permitted by the customer."
-    },
-    {
-      "question": "A Solutions Architect is provisioning resources for a new application. Which of the following AWS services operate globally and are NOT bound to a specific AWS Region?",
-      "options": [
-        "Amazon EC2 and Amazon VPC",
-        "AWS Lambda and Amazon S3",
-        "AWS IAM and Amazon Route 53",
-        "Amazon RDS and Amazon DynamoDB"
-      ],
-      "correctIndex": 2,
-      "explanation": "AWS Identity and Access Management (IAM), Amazon Route 53, Amazon CloudFront, and AWS WAF are Global Services. Compute, networking, and most database services (like EC2, VPC, Lambda, and RDS) are Region-scoped."
+      "explanation": "AWS Local Zones place compute, storage, database, and other select AWS services closer to large population centers where no standard AWS Region exists today, specifically to deliver single-digit millisecond latency."
     }
   ]
 }
