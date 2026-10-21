@@ -117,17 +117,17 @@
             </div>
         </div>
 
-        <!-- EXAM RESULTS -->
-        <div id="view-exam-results" class="hidden flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-md mt-10">
-            <h2 class="text-3xl font-bold text-gray-800 mb-2">Exam Finished!</h2>
-            <p class="text-gray-500 mb-6">Here is your final score for this session.</p>
-            
-            <div class="bg-indigo-100 text-indigo-800 text-4xl font-black py-6 px-10 rounded-full mb-8">
-                <span id="final-score">0 / 0</span>
+        <!-- EXAM RESULTS SCREEN -->
+        <div id="view-exam-results" class="hidden text-center bg-white p-8 rounded-xl shadow-md border-t-4 border-indigo-500 mt-10">
+            <h2 class="text-3xl font-bold mb-2">Exam Finished!</h2>
+            <p class="text-gray-600 mb-6">Here is your final score:</p>
+
+            <div id="exam-final-score" class="text-6xl font-extrabold text-indigo-600 mb-8">
+                0 / 0
             </div>
-            
-            <button onclick="showMenu()" class="w-full md:w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow transition-colors">
-                Back to Menu
+
+            <button onclick="showMenu()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-lg shadow">
+                Return to Main Menu
             </button>
         </div>
 
@@ -306,40 +306,33 @@
             let topicsData = [];
             let totalAvailable = 0;
 
-            // Extraer preguntas de cada tema seleccionado
+            // Extract questions
             checkboxes.forEach(chk => {
                 const data = topicDataCache[chk.value];
                 if (data && data.test) {
                     totalAvailable += data.test.length;
                     const questionsWithContext = data.test.map(q => ({...q, _topicTitle: data.title}));
-                    // Mezclar internamente el tema por si acaso
                     topicsData.push(questionsWithContext.sort(() => Math.random() - 0.5));
                 }
             });
 
             if (totalAvailable <= 65) {
-                // Hay menos de 65, nos las quedamos todas
                 topicsData.forEach(qs => {
                     finalQuestions = finalQuestions.concat(qs);
                 });
             } else {
-                // Hay más de 65. Calculamos distribución equitativa.
                 const numTopics = topicsData.length;
                 const questionsPerTopic = Math.floor(65 / numTopics);
                 let leftoverPool = [];
 
                 topicsData.forEach(qs => {
-                    // Cogemos la proporción asignada o las que haya si son menos
                     const takeCount = Math.min(qs.length, questionsPerTopic);
                     finalQuestions = finalQuestions.concat(qs.slice(0, takeCount));
-                    
-                    // El resto van a la bolsa común
                     if (qs.length > takeCount) {
                         leftoverPool = leftoverPool.concat(qs.slice(takeCount));
                     }
                 });
 
-                // Si faltan preguntas por redondear, cogemos de la bolsa común aleatoriamente
                 let needed = 65 - finalQuestions.length;
                 if (needed > 0) {
                     leftoverPool = leftoverPool.sort(() => Math.random() - 0.5);
@@ -347,7 +340,7 @@
                 }
             }
 
-            // Mezclado absoluto final de las elegidas
+            // Final Absolute Shuffle
             currentExamQuestions = finalQuestions.sort(() => Math.random() - 0.5);
             
             examIndex = 0;
@@ -360,10 +353,27 @@
 
         function renderExamQuestion() {
             if(examIndex >= currentExamQuestions.length) {
-                // Mostrar pantalla de resultados
+                // EXAM FINISHED LOGIC
                 hideAllViews();
-                document.getElementById('final-score').innerText = `${examScore} / ${currentExamQuestions.length}`;
-                document.getElementById('view-exam-results').classList.remove('hidden');
+                
+                const scoreDiv = document.getElementById('exam-final-score');
+                const resultContainer = document.getElementById('view-exam-results');
+                
+                scoreDiv.innerText = `${examScore} / ${currentExamQuestions.length}`;
+
+                // Calculate pass/fail (AWS SAA passing score is 72%)
+                const ratio = examScore / currentExamQuestions.length;
+                if (ratio >= 0.72) {
+                    scoreDiv.className = "text-6xl font-extrabold text-green-600 mb-8";
+                    resultContainer.classList.remove('border-red-500');
+                    resultContainer.classList.add('border-green-500');
+                } else {
+                    scoreDiv.className = "text-6xl font-extrabold text-red-600 mb-8";
+                    resultContainer.classList.remove('border-green-500');
+                    resultContainer.classList.add('border-red-500');
+                }
+
+                resultContainer.classList.remove('hidden');
                 return;
             }
 
@@ -375,7 +385,7 @@
             const optionsContainer = document.getElementById('exam-options');
             optionsContainer.innerHTML = '';
             
-            // Limpiar estilos residuales del feedback box
+            // Clean previous styles from feedback box
             const feedbackBox = document.getElementById('exam-feedback');
             feedbackBox.classList.add('hidden');
             feedbackBox.classList.remove('bg-green-50', 'bg-red-50');
@@ -408,7 +418,7 @@
             }
 
             const feedbackBox = document.getElementById('exam-feedback');
-            feedbackBox.classList.remove('hidden');
+            feedbackBox.classList.remove('hidden', 'bg-green-50', 'bg-red-50');
             feedbackBox.classList.add(selectedIndex === correctIndex ? 'bg-green-50' : 'bg-red-50');
             
             document.getElementById('exam-explanation').innerHTML = `
